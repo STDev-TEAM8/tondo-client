@@ -1,0 +1,491 @@
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+}
+
+.canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  /* 파티클 밀집 영역이 빛나는 glow 효과 */
+  filter: blur(1px) brightness(1.25) contrast(1.1);
+}
+
+/* ── IDLE 오버레이 ── */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.micButton {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: #fff;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+  animation: micPulse 2s ease-in-out infinite;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.micButton:hover {
+  transform: scale(1.06);
+  background: #e8e8e8;
+}
+
+.micButton:active {
+  transform: scale(0.96);
+}
+
+@keyframes micPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255,255,255,0.35); }
+  70%  { box-shadow: 0 0 0 18px rgba(255,255,255,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+}
+
+.idleHint {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.04em;
+}
+
+.errorMsg {
+  font-size: 13px;
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 280px;
+}
+
+/* ── RECORDING: 카운트다운 바 ── */
+.countdownBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #1a1a1a;
+}
+
+.countdownFill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #c084fc);
+  transition: width 0.9s linear;
+}
+
+.countdownText {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ── SETUP 오버레이 ── */
+.setupOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 32px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.setupPanel {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(12, 12, 12, 0.95);
+  border: 1px solid #2a2a2a;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  backdrop-filter: blur(12px);
+}
+
+.setupTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.setupSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.setupSectionLabel {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 2px;
+}
+
+/* ── 색상 팔레트 ── */
+.colorPalette {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.colorSwatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1.5px solid #2a2a2a;
+  background: #111;
+  transition: border-color 0.2s, background 0.2s;
+  flex: 1;
+}
+
+.colorSwatch:hover {
+  border-color: #444;
+  background: #1a1a1a;
+}
+
+.colorSwatchActive {
+  border-color: #c084fc;
+  background: rgba(192, 132, 252, 0.08);
+}
+
+.swatchDot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: block;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.swatchLabel {
+  font-size: 12px;
+  color: #888;
+}
+
+.colorSwatchActive .swatchLabel {
+  color: #c084fc;
+}
+
+/* ── 녹음 시작 버튼 ── */
+.startButton {
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+  background: #fff;
+  border-radius: 50px;
+  transition: opacity 0.2s, transform 0.15s;
+  text-align: center;
+}
+
+.startButton:hover  { opacity: 0.88; }
+.startButton:active { transform: scale(0.97); }
+
+/* ── RECORDING: 하단 UI ── */
+.recordingUi {
+  position: absolute;
+  bottom: 48px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.recordHint {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.04em;
+}
+
+.captureButton {
+  padding: 14px 52px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #000;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 50px;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.captureButton:hover  { opacity: 0.85; }
+.captureButton:active { transform: scale(0.97); }
+
+/* ── PREVIEW 오버레이 ── */
+.previewOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+}
+
+.previewHint {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.04em;
+}
+
+.previewActions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.previewBtn {
+  flex: 1;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 50px;
+  border: 1px solid #444;
+  color: #aaa;
+  background: rgba(255, 255, 255, 0.05);
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.previewBtn:hover {
+  border-color: #777;
+  color: #ddd;
+}
+
+.previewBtnPrimary {
+  color: #000;
+  background: rgba(255, 255, 255, 0.92);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.previewBtnPrimary:hover {
+  opacity: 0.85;
+  color: #000;
+}
+
+/* ── SENDING 오버레이 ── */
+.sendingOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ccc;
+  font-size: 15px;
+}
+
+.sendingSpinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid #333;
+  border-top-color: #c084fc;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── 오류 화면 ── */
+.errorScreen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  color: #ff6b6b;
+  font-size: 16px;
+}
+
+.errorScreen button {
+  padding: 10px 28px;
+  border: 1px solid #555;
+  border-radius: 8px;
+  color: #aaa;
+  font-size: 14px;
+}
+
+/* ── 숨김 탭 영역 (디버그) ── */
+.cornerTap {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  z-index: 50;
+}
+
+/* ── 디버그 패널 ── */
+.debugPanel {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  max-width: 360px;
+  background: rgba(10, 10, 10, 0.92);
+  border: 1px solid #333;
+  border-radius: 14px;
+  padding: 16px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  backdrop-filter: blur(8px);
+}
+
+.debugHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c084fc;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.debugClose {
+  font-size: 16px;
+  color: #666;
+  padding: 2px 6px;
+}
+
+.debugSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.debugLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #888;
+}
+
+.debugValue {
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  font-weight: 600;
+}
+
+.debugBadge {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.speaking { background: rgba(74,222,128,0.2); color: #4ade80; }
+.silent   { background: rgba(156,163,175,0.15); color: #9ca3af; }
+
+.meterTrack {
+  position: relative;
+  width: 100%;
+  height: 10px;
+  background: #222;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.meterFill {
+  height: 100%;
+  background: #555;
+  border-radius: 5px;
+  transition: width 0.05s linear;
+}
+
+.meterFill.meterActive {
+  background: linear-gradient(90deg, #4ade80, #22c55e);
+}
+
+.meterThreshold {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #f59e0b;
+  z-index: 2;
+  transform: translateX(-50%);
+}
+
+.meterLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #555;
+}
+
+.debugField {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #aaa;
+  gap: 8px;
+}
+
+.debugInput {
+  width: 90px;
+  padding: 6px 10px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  text-align: right;
+}
+
+.debugInput:focus {
+  outline: none;
+  border-color: #c084fc;
+}
+
+.debugReset {
+  padding: 8px;
+  font-size: 12px;
+  color: #888;
+  border: 1px solid #333;
+  border-radius: 8px;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.debugReset:hover { border-color: #555; color: #ccc; }
