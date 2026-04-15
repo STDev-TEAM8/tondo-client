@@ -24,10 +24,10 @@ export async function requestArtwork({ uuid, avgPitch, avgVolume, avgTimbre, ima
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       uuid,
-      avgHz: avgPitch,
-      avgVolume,
-      avgTimbre,
-      imageBase64,
+      averageHz: avgPitch,
+      averageVolulme: avgVolume,
+      averageTimbre: avgTimbre,
+      base64Image: imageBase64,
     }),
   });
 
@@ -55,7 +55,7 @@ export async function fetchArtworkResult(taskId, uuid) {
   const data = await res.json();
   return {
     imageUrl: data.imageUrl,
-    docentText: data.docentText ?? '',
+    docentText: data.report ?? '',
   };
 }
 

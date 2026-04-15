@@ -53,23 +53,24 @@ export function useSSE() {
     }
 
     // ── 실제 SSE ──────────────────────────────────────────────────────────────
-    const url = `/api/v1/tasks/${taskId}/stream`;
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
+    const url = `${BASE_URL}/api/v1/tasks/${taskId}/stream`;
     const es = new EventSource(url);
 
-    es.onmessage = (e) => {
+    es.addEventListener('progress', (e) => {
       try {
         const data = JSON.parse(e.data);
-        const percent = data.percent ?? 0;
+        const percent = data.progress ?? 0;
         const status = data.status ?? '';
         setProgress({ percent, status });
-        if (percent >= 100 || status === '완료') {
+        if (percent >= 100 || status === 'COMPLETED') {
           setIsDone(true);
           es.close();
         }
       } catch {
         // 파싱 실패 무시
       }
-    };
+    });
 
     es.onerror = () => {
       setSseError('AI 파이프라인 연결 오류가 발생했습니다.');
