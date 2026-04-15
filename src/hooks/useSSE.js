@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 /**
  * SSE(Server-Sent Events) 연결 훅
  *
- * GET /api/v1/tasks/{taskId}/stream
+ * GET /api/v1/artworks/{taskId}/stream
  * 서버 이벤트 형식: { percent: 0~100, status: string }
  *
  * taskId 가 "mock_" 으로 시작하면 → 모의 SSE 시뮬레이션 실행
@@ -54,7 +54,7 @@ export function useSSE() {
 
     // ── 실제 SSE ──────────────────────────────────────────────────────────────
     const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
-    const url = `${BASE_URL}/api/v1/tasks/${taskId}/stream`;
+    const url = `${BASE_URL}/api/v1/artworks/${taskId}/stream`;
     const es = new EventSource(url);
 
     es.addEventListener('progress', (e) => {
