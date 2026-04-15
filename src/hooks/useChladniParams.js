@@ -12,7 +12,7 @@ import { mapFeaturesToChladni } from '../utils/chladniMath';
 const ALPHA_SHAPE     = 0.025;
 const ALPHA_PHASE     = 0.04;
 const ALPHA_THRESHOLD = 0.1;
-const ALPHA_HUE       = 0.03;
+const ALPHA_HUE       = 0.12; // 색상 반응 속도 (클수록 빠름 — 말할 때 실시간 변화)
 
 const UPDATE_VOLUME_MIN = 0.05;
 
@@ -94,10 +94,10 @@ function buildResult(cur, voiceHue, baseHue) {
     if (diff >  180) diff -= 360;
     if (diff < -180) diff += 360;
     const finalHue = (baseHue + diff * 0.3 + 360) % 360;
-    color = `hsl(${finalHue.toFixed(1)}, 100%, 60%)`;
+    color = `hsl(${finalHue.toFixed(1)}, 100%, 55%)`;
   } else {
-    // undefined: 목소리 색상 그대로
-    color = `hsl(${voiceHue.toFixed(1)}, 100%, 60%)`;
+    // undefined: 목소리 피치가 직접 색상 결정 (어두운 영역 제외: L=55%)
+    color = `hsl(${voiceHue.toFixed(1)}, 100%, 55%)`;
   }
   return { n: cur.n, m: cur.m, omega: cur.omega, threshold: cur.threshold, color };
 }

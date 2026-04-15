@@ -63,16 +63,24 @@ export function mapFeaturesToChladni(features) {
 }
 
 /**
- * 기본 주파수 대역을 빛 스펙트럼 색상으로 변환
- * 물리학 스펙트럼: 낮은 주파수(저음) = 빨강, 높은 주파수(고음) = 파랑/보라
- * @param {number} freqBand - 기본 주파수 Hz (80~4000)
+ * 기본 주파수 대역을 목소리 특성 기반 색상으로 변환
+ *
+ * 인간 목소리 F0 구간별 색상 팔레트 (어두운 영역 제외: S=100%, L=55%):
+ *   80~130 Hz  (남성 저음/베이스)   → 빨강~주황   H:  0~40
+ *  130~180 Hz  (남성 바리톤/테너)   → 주황~노랑   H: 40~80
+ *  180~230 Hz  (남녀 경계 대역)     → 노랑~연두   H: 80~120
+ *  230~300 Hz  (여성 알토/메조)     → 연두~초록   H:120~160
+ *  300~390 Hz  (여성 소프라노 低)   → 초록~청록   H:160~210
+ *  390~520 Hz  (여성 소프라노 高)   → 청록~파랑   H:210~255
+ *  520 Hz 이상 (가성/아동/고음)     → 파랑~보라   H:255~300
+ *
+ * @param {number} freqBand - 기본 주파수 Hz
  * @returns {string} HSL 색상 문자열
  */
 export function freqBandToColor(freqBand) {
-  // Hz → 색조(Hue): 낮음=0(빨강), 높음=270(보라)
-  const hue = clamp(mapRange(freqBand, 80, 1200, 0, 270), 0, 270);
-  // 네온 느낌: 높은 채도, 밝은 명도
-  return `hsl(${hue}, 100%, 60%)`;
+  const hue = clamp(mapRange(freqBand, 80, 600, 0, 300), 0, 300);
+  // S=100% (최대 채도), L=55% (어두운 하단 영역 제외 — 밝고 선명한 팔레트)
+  return `hsl(${hue.toFixed(1)}, 100%, 55%)`;
 }
 
 /**
