@@ -11,6 +11,25 @@ const IS_MOCK = !BASE_URL;
 // ─── 실제 API ─────────────────────────────────────────────────────────────────
 
 /**
+ * POST /api/v1/auth/signup  — 이름/전화번호 등록
+ */
+export async function signup({ name, phoneNumber }) {
+  if (IS_MOCK) {
+    await delay(500);
+    console.log('[TonDo] 🧪 Mock signup:', { name, phoneNumber });
+    return;
+  }
+
+  const res = await fetch(`${BASE_URL}/api/v1/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, phoneNumber }),
+  });
+
+  if (!res.ok) throw new Error(`signup 실패: ${res.status}`);
+}
+
+/**
  * POST /api/v1/artworks  — 이미지 생성 요청
  * @returns {Promise<{ taskId: string }>}
  */

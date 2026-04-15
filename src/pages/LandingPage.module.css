@@ -1,67 +1,150 @@
-.container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* ── 최상위 래퍼 ── */
+.outer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
   background: #000;
-  padding: 24px;
 }
 
-.content {
+/* ── 투명 스크롤 드라이버 ──
+   실제 스크롤 이벤트를 받아 progress를 계산하는 투명 오버레이.
+   섹션 위에 z-index로 올려두고, 폼이 활성화되면 pointer-events: none으로 해제.
+*/
+.scroller {
+  position: absolute;
+  inset: 0;
+  overflow-y: scroll;
+  z-index: 10;
+  scrollbar-width: none;   /* Firefox */
+}
+.scroller::-webkit-scrollbar {
+  display: none;           /* Chrome/Safari */
+}
+
+/* 스크롤 공간 확보 (200vh → 스크롤 범위 = 100vh) */
+.spacer {
+  height: 200vh;
+}
+
+/* ── 공통 섹션 ── */
+.section1,
+.section2 {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
-  max-width: 400px;
+  justify-content: center;
+  padding: 40px 28px;
   text-align: center;
+  z-index: 1;
+  /* will-change: 성능 최적화 */
+  will-change: transform, opacity;
 }
 
+/* ── Section 1: 타이틀 ── */
 .eyebrow {
-  font-size: 13px;
-  letter-spacing: 0.12em;
+  font-size: 12px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #888;
+  color: #666;
+  margin-bottom: 16px;
 }
 
 .title {
-  font-size: 72px;
+  font-size: clamp(64px, 18vw, 96px);
   font-weight: 700;
-  letter-spacing: -2px;
+  letter-spacing: -3px;
+  line-height: 1;
   background: linear-gradient(135deg, #ff3cac, #784ba0, #2b86c5);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  line-height: 1;
+  margin-bottom: 24px;
 }
 
 .description {
-  font-size: 16px;
-  line-height: 1.7;
-  color: #aaa;
+  font-size: 15px;
+  line-height: 1.8;
+  color: #888;
+  max-width: 320px;
+  margin-bottom: 48px;
 }
 
-.error {
-  font-size: 14px;
-  color: #ff4d4d;
-  background: rgba(255, 77, 77, 0.1);
-  padding: 10px 16px;
-  border-radius: 8px;
+.scrollHint {
+  font-size: 12px;
+  color: #444;
+  letter-spacing: 0.05em;
+  animation: hintBob 2s ease-in-out infinite;
+}
+
+@keyframes hintBob {
+  0%, 100% { transform: translateY(0);   opacity: 0.5; }
+  50%       { transform: translateY(6px); opacity: 1;   }
+}
+
+/* ── Section 2: 폼 ── */
+.formTitle {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 28px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+  margin-bottom: 28px;
+}
+
+.input {
+  width: 100%;
+  padding: 14px 18px;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  color: #e8e8e8;
+  font-size: 16px;       /* 16px 미만이면 iOS에서 자동 확대됨 */
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.input::placeholder {
+  color: #444;
+}
+
+.input:focus {
+  border-color: #7c3aed;
+}
+
+/* ── 버튼 래퍼: fade + slide-up 트랜지션 ── */
+.btnWrap {
+  width: 100%;
+  max-width: 320px;
+  transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
 .startButton {
-  margin-top: 8px;
-  padding: 16px 48px;
+  width: 100%;
+  padding: 16px;
   font-size: 16px;
   font-weight: 600;
   color: #000;
   background: #fff;
   border-radius: 50px;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.15s;
 }
 
-.startButton:hover {
+.startButton:hover:not(:disabled) {
   opacity: 0.85;
+  transform: translateY(-1px);
 }
 
 .startButton:disabled {
@@ -69,7 +152,22 @@
   cursor: not-allowed;
 }
 
-.hint {
-  font-size: 12px;
-  color: #555;
+/* ── 에러 ── */
+.error {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #ff4d4d;
+  background: rgba(255, 77, 77, 0.08);
+  padding: 10px 16px;
+  border-radius: 8px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 380px) {
+  .description {
+    font-size: 14px;
+  }
 }

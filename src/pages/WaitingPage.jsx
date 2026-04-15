@@ -1,14 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSSE } from '../hooks/useSSE';
-import { fetchArtworkResult } from '../api/artworkApi';
 import styles from './WaitingPage.module.css';
 
 /**
  * AI 파이프라인 대기 페이지
  *
  * - SSE로 진행 상태 실시간 수신
- * - 완료 시 결과 이미지 조회 후 ResultPage로 이동
+ * - 완료(100%) 시 "결과 확인하기" 버튼 노출 → 클릭 시 ResultPage로 이동
  */
 export default function WaitingPage() {
   const navigate = useNavigate();
@@ -16,6 +15,7 @@ export default function WaitingPage() {
   const { taskId, uuid } = location.state ?? {};
 
   const { progress, isDone, sseError, connect } = useSSE();
+  const [isLoading, setIsLoading] = useState(false);
 
   // taskId가 없으면 랜딩으로
   useEffect(() => {
@@ -26,20 +26,13 @@ export default function WaitingPage() {
     connect(taskId);
   }, [taskId, connect, navigate]);
 
-  // SSE 완료 → 결과 조회
-  useEffect(() => {
-    if (!isDone) return;
-
-    (async () => {
-      try {
-        const result = await fetchArtworkResult(taskId, uuid);
-        navigate('/result', { state: { ...result, taskId } });
-      } catch (err) {
-        console.error('결과 조회 실패:', err);
-        navigate('/result', { state: { imageUrl: null, docentText: '', taskId } });
-      }
-    })();
-  }, [isDone, taskId, uuid, navigate]);
+  // "결과 확인하기" 버튼 클릭 → taskId를 URL에 담아 이동
+  const handleViewResult = useCallback(() => {
+    if (isLoading) return;
+    setIsLoading(true);
+    const query = uuid ? `?uuid=${encodeURIComponent(uuid)}` : '';
+    navigate(`/result/${taskId}${query}`);
+  }, [isLoading, taskId, uuid, navigate]);
 
   // 상태 메시지 → 아이콘 매핑
   const statusIcon = getStatusIcon(progress.status);
@@ -47,11 +40,13 @@ export default function WaitingPage() {
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-        <div className={styles.orb} />
+        <div className={`${styles.orb} ${isDone ? styles.orbDone : ''}`} />
 
-        <p className={styles.statusIcon}>{statusIcon}</p>
+        <p className={`${styles.statusIcon} ${isDone ? styles.statusIconDone : ''}`}>
+          {isDone ? '✓' : statusIcon}
+        </p>
         <p className={styles.statusText}>
-          {progress.status || 'AI 파이프라인 시작 중...'}
+          {isDone ? '완성됐어요!' : (progress.status || 'AI 파이프라인 시작 중...')}
         </p>
 
         <div className={styles.progressBar}>
@@ -61,6 +56,16 @@ export default function WaitingPage() {
           />
         </div>
         <p className={styles.percent}>{progress.percent}%</p>
+
+        {isDone && (
+          <button
+            className={styles.viewResultBtn}
+            onClick={handleViewResult}
+            disabled={isLoading}
+          >
+            {isLoading ? '불러오는 중...' : '결과 확인하기'}
+          </button>
+        )}
 
         {sseError && (
           <p className={styles.error}>{sseError}</p>

@@ -1,65 +1,230 @@
+/* ── 레이아웃 ── */
+/* html/body/root에 overflow:hidden이 있으므로 fixed로 띄워 독립 스크롤 */
 .container {
-  width: 100%;
-  height: 100%;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 32px;
   background: #000;
-  overflow-y: auto;
-  padding: 24px 16px 40px;
-  gap: 24px;
+  color: #e8e8e8;
+  padding: 32px 20px 60px;
+  box-sizing: border-box;
 }
 
-/* ── 이미지 ── */
-.imageWrapper {
-  width: 100%;
-  max-width: 400px;
-  border-radius: 16px;
-  overflow: hidden;
-  background: #111;
+/* ── 로딩 / 에러 상태 ── */
+.loadingState {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: aspect-ratio 0.3s ease;
+  gap: 16px;
+  height: 100%;
+  min-height: 300px;
+  color: #666;
+  font-size: 14px;
 }
 
-.imageWrapper[data-crop="watch"] { aspect-ratio: 1 / 1; }
-.imageWrapper[data-crop="phone"] { aspect-ratio: 9 / 16; }
-.imageWrapper[data-crop="laptop"] { aspect-ratio: 16 / 9; }
+.errorText {
+  color: #ff4d4d;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ── 테스트 모드 뱃지 ── */
+.mockBadge {
+  font-size: 12px;
+  color: #facc15;
+  background: rgba(250, 204, 21, 0.12);
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  border-radius: 999px;
+  padding: 4px 14px;
+  align-self: center;
+}
+
+/* ── 이미지 섹션 ── */
+.imageSection {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  justify-content: center;
+}
 
 .resultImage {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 560px;
+  height: auto;
+  border-radius: 12px;
   display: block;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.cropLoading {
+.mockPlaceholder {
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 1 / 1;
+  background: #111;
+  border: 1px dashed #333;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   color: #555;
   font-size: 14px;
 }
 
-/* ── 비율 선택 ── */
-.cropSelector {
+.mockIcon {
+  font-size: 36px;
+  color: #444;
+}
+
+.mockSub {
+  font-size: 12px;
+  color: #444;
+}
+
+.cropLoading {
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 1 / 1;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 12px;
+  color: #666;
+  font-size: 14px;
+}
+
+.cropLoadingSpinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #333;
+  border-top-color: #c084fc;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── 도슨트 섹션 ── */
+.docentSection {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.docentLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #c084fc;
+  margin: 0;
+}
+
+.docentText {
+  font-size: 15px;
+  line-height: 1.75;
+  color: #ccc;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.docentMock {
+  color: #555;
+  font-style: italic;
+}
+
+/* ── 기기 선택 아코디언 섹션 ── */
+.cropSection {
+  width: 100%;
+  max-width: 560px;
+  border: 1px solid #222;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.accordionTrigger {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #111;
+  color: #e8e8e8;
+  font-size: 15px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.accordionTrigger:hover {
+  background: #161616;
+}
+
+.accordionArrow {
+  font-size: 16px;
+  color: #666;
+  transition: transform 0.25s ease;
+  display: inline-block;
+}
+
+.accordionArrowOpen {
+  transform: rotate(180deg);
+}
+
+.accordionBody {
+  padding: 16px 20px 20px;
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top: 1px solid #1a1a1a;
+}
+
+.cropOptions {
+  display: flex;
+  gap: 10px;
 }
 
 .cropBtn {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 14px 20px;
-  border-radius: 14px;
-  border: 1.5px solid #333;
+  padding: 14px 8px;
   background: #111;
-  transition: border-color 0.2s, background 0.2s;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  color: #888;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  position: relative;
 }
 
-.cropBtn.active {
-  border-color: #c084fc;
-  background: rgba(192, 132, 252, 0.1);
+.cropBtn:hover {
+  border-color: #444;
+  color: #ccc;
+}
+
+.cropBtnActive {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.12);
+  color: #e8e8e8;
 }
 
 .cropIcon {
@@ -68,101 +233,112 @@
 
 .cropLabel {
   font-size: 12px;
-  color: #aaa;
 }
 
-.cropBtn.active .cropLabel {
+.cropCheck {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 11px;
   color: #c084fc;
 }
 
-/* ── 테스트 모드 뱃지 ── */
-.mockBadge {
-  font-size: 12px;
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-radius: 20px;
-  padding: 5px 14px;
+.saveBtn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #7c3aed, #c084fc);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
 }
 
-/* ── mock 플레이스홀더 ── */
-.mockPlaceholder {
+.saveBtn:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.saveBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── QR 섹션 ── */
+.qrSection {
+  width: 100%;
+  max-width: 560px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 32px;
-  text-align: center;
-  color: #555;
-  font-size: 14px;
+  gap: 12px;
+  padding: 24px 0;
+  border-top: 1px solid #1a1a1a;
 }
 
-.mockIcon {
-  font-size: 36px;
-  color: #333;
-  animation: mockPulse 2s ease-in-out infinite;
+.qrLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  letter-spacing: 0.05em;
+  margin: 0;
 }
 
-@keyframes mockPulse {
-  0%, 100% { opacity: 0.4; }
-  50%       { opacity: 1; }
+.qrWrapper {
+  padding: 12px;
+  background: #000;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
 }
 
-.mockSub {
+.qrHint {
   font-size: 12px;
   color: #444;
-}
-
-/* ── 도슨트 ── */
-.docent {
-  max-width: 400px;
-  font-size: 14px;
-  line-height: 1.7;
-  color: #888;
+  margin: 0;
   text-align: center;
-  padding: 0 8px;
 }
 
-.docentMock {
-  color: #666;
-  font-size: 13px;
-  font-style: italic;
-}
-
-/* ── 액션 ── */
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* ── 다시 체험 ── */
+.retrySection {
   width: 100%;
-  max-width: 400px;
-}
-
-.downloadBtn {
-  padding: 16px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #000;
-  background: #fff;
-  border-radius: 50px;
-  transition: opacity 0.2s;
-}
-
-.downloadBtn:hover {
-  opacity: 0.85;
+  max-width: 560px;
 }
 
 .retryBtn {
+  width: 100%;
   padding: 14px;
-  font-size: 15px;
-  color: #888;
+  background: transparent;
   border: 1px solid #333;
-  border-radius: 50px;
-  transition: border-color 0.2s, color 0.2s;
+  border-radius: 10px;
+  color: #888;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
 }
 
 .retryBtn:hover {
-  border-color: #666;
+  border-color: #555;
   color: #ccc;
+}
+
+/* ── 반응형 (모바일) ── */
+@media (max-width: 480px) {
+  .container {
+    padding: 24px 16px 48px;
+    gap: 24px;
+  }
+
+  .docentText {
+    font-size: 14px;
+  }
+
+  .cropOptions {
+    gap: 8px;
+  }
+
+  .cropBtn {
+    padding: 12px 6px;
+  }
 }

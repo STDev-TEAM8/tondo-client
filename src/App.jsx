@@ -11,7 +11,7 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/visualizer" element={<VisualizerPage />} />
         <Route path="/waiting" element={<WaitingPage />} />
-        <Route path="/result" element={<ResultPage />} />
+        <Route path="/result/:taskId" element={<ResultPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

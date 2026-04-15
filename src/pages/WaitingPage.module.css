@@ -76,3 +76,43 @@
   font-size: 13px;
   color: #ff4d4d;
 }
+
+/* 완료 상태 orb */
+.orbDone {
+  background: radial-gradient(circle at 40% 40%, #86efac, #16a34a, #052e16);
+  box-shadow:
+    0 0 40px rgba(22, 163, 74, 0.6),
+    0 0 80px rgba(22, 163, 74, 0.3);
+  animation: none;
+}
+
+/* 완료 상태 아이콘 — 회전 없이 고정 */
+.statusIconDone {
+  animation: none;
+  color: #86efac;
+}
+
+/* 결과 확인하기 버튼 */
+.viewResultBtn {
+  margin-top: 8px;
+  padding: 14px 36px;
+  background: linear-gradient(135deg, #7c3aed, #c084fc);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.viewResultBtn:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.viewResultBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
