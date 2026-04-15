@@ -20,6 +20,8 @@ export function useAudioAnalyzer() {
   const [frequencyData, setFrequencyData] = useState(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState(null);
+  // FFT 파라미터 정보 (디버그 패널 표시용)
+  const [audioInfo, setAudioInfo] = useState(null);
 
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
@@ -87,9 +89,21 @@ export function useAudioAnalyzer() {
       highPass.connect(lowPass);
       lowPass.connect(analyser);
 
-      const bufferLength = analyser.frequencyBinCount;
+      const bufferLength = analyser.frequencyBinCount; // fftSize / 2
       const dataArray = new Uint8Array(bufferLength);
       dataArrayRef.current = dataArray;
+
+      // FFT 파라미터 계산 및 노출
+      const binWidth = (ctx.sampleRate / 2) / bufferLength; // Hz per bin
+      setAudioInfo({
+        sampleRate: ctx.sampleRate,
+        fftSize: analyser.fftSize,
+        binCount: bufferLength,
+        binWidth: binWidth,          // Hz/bin
+        filterMin: 80,               // highpass 컷오프
+        filterMax: 4000,             // lowpass 컷오프
+        smoothing: analyser.smoothingTimeConstant,
+      });
 
       setIsReady(true);
       setError(null);
@@ -117,6 +131,7 @@ export function useAudioAnalyzer() {
     frequencyData,
     isReady,
     error,
+    audioInfo,
     analyserRef,
     start,
     stop,

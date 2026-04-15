@@ -20,11 +20,15 @@ const PARTICLE_COUNT    = 40000;
 const REBUILD_DELTA     = 0.04;
 const SILENCE_HOLD_MS   = 1200; // 침묵 후 흩어지기 전 유예 시간 (ms)
 
-// 제안 색상 팔레트 (3종)
+// 파티클 색상 팔레트
+// hue: undefined → 목소리 피치가 실시간으로 색상 결정
+// hue: null      → 흰색/무채색
+// hue: number    → 해당 색조를 베이스로 목소리와 블렌딩
 const COLOR_PALETTE = [
-  { id: 'white',  hue: null, hex: '#e8e8e8', label: '흰색' },
-  { id: 'purple', hue: 270,  hex: '#c084fc', label: '보라' },
-  { id: 'teal',   hue: 177,  hex: '#2dd4bf', label: '청록' },
+  { id: 'voice',  hue: undefined, hex: null,      label: '목소리' }, // 피치에 따라 자동 변환
+  { id: 'white',  hue: null,      hex: '#e8e8e8', label: '흰색'   },
+  { id: 'warm',   hue: 25,        hex: '#fb923c', label: '따뜻'   }, // 주황 계열
+  { id: 'cool',   hue: 210,       hex: '#38bdf8', label: '시원'   }, // 하늘 계열
 ];
 
 export default function VisualizerPage() {
@@ -49,11 +53,12 @@ export default function VisualizerPage() {
   // ── 상태 ─────────────────────────────────────────────────────────────────────
   const [phase, setPhase] = useState('idle');
   // 'idle' | 'setup' | 'recording' | 'preview' | 'sending' | 'error'
-  const [threshold, setThreshold]           = useState(DEFAULT_THRESHOLD);
-  const [liveVolume, setLiveVolume]         = useState(0);
-  const [liveVoiceRatio, setLiveVoiceRatio] = useState(0);
-  const [selectedColor, setSelectedColor]   = useState(COLOR_PALETTE[0]);
-  const [sendError, setSendError]           = useState(null);
+  const [threshold, setThreshold]                   = useState(DEFAULT_THRESHOLD);
+  const [voiceRatioThreshold, setVoiceRatioThreshold] = useState(0.45);
+  const [liveVolume, setLiveVolume]                 = useState(0);
+  const [liveVoiceRatio, setLiveVoiceRatio]         = useState(0);
+  const [selectedColor, setSelectedColor]           = useState(COLOR_PALETTE[0]);
+  const [sendError, setSendError]                   = useState(null);
 
   // ── 디버그 패널 ──────────────────────────────────────────────────────────────
   const [debugOpen, setDebugOpen] = useState(false);
@@ -71,7 +76,7 @@ export default function VisualizerPage() {
   };
 
   // ── 오디오 & 클라드니 EMA ─────────────────────────────────────────────────────
-  const { features, isReady, error: micError, start, stop } = useAudioAnalyzer();
+  const { features, isReady, error: micError, audioInfo, start, stop } = useAudioAnalyzer();
   const { update: updateChladni, reset: resetChladni } = useChladniParams();
 
   // ── 캔버스 초기화 (리사이즈 포함) ─────────────────────────────────────────────
@@ -224,7 +229,7 @@ export default function VisualizerPage() {
     setLiveVolume(vol);
     setLiveVoiceRatio(vr);
 
-    const isSpeaking = vol >= threshold && vr >= 0.45;
+    const isSpeaking = vol >= threshold && vr >= voiceRatioThreshold;
 
     if (isSpeaking) {
       // 목소리 감지: 침묵 타이머 취소, 절점 수렴
@@ -297,12 +302,12 @@ export default function VisualizerPage() {
     // 렌더 (침묵/발화 모두)
     const rgb = lastParamsRef.current
       ? hslToRgbArray(lastParamsRef.current.color)
-      : selectedColor?.hue === null
-        ? [232, 232, 232]
-        : hslToRgbArray(`hsl(${selectedColor?.hue ?? 270}, 100%, 60%)`);
+      : selectedColor?.hue == null         // undefined(목소리 자동) or null(흰색) → 중립
+        ? [200, 200, 200]
+        : hslToRgbArray(`hsl(${selectedColor.hue}, 100%, 55%)`);
     renderAndFlush(canvas, rgb, false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [features, isReady, phase, threshold, updateChladni, selectedColor]);
+  }, [features, isReady, phase, threshold, voiceRatioThreshold, updateChladni, selectedColor]);
 
   // ── 마이크 오류 ──────────────────────────────────────────────────────────────
   if (micError) {
@@ -314,7 +319,7 @@ export default function VisualizerPage() {
     );
   }
 
-  const isOverThreshold = liveVolume >= threshold && liveVoiceRatio >= 0.45;
+  const isOverThreshold = liveVolume >= threshold && liveVoiceRatio >= voiceRatioThreshold;
 
   return (
     <div className={styles.container}>
@@ -389,7 +394,14 @@ export default function VisualizerPage() {
                     className={`${styles.colorSwatch} ${selectedColor?.id === c.id ? styles.colorSwatchActive : ''}`}
                     onClick={() => setSelectedColor(c)}
                   >
-                    <span className={styles.swatchDot} style={{ background: c.hex }} />
+                    <span
+                      className={styles.swatchDot}
+                      style={
+                        c.id === 'voice'
+                          ? { background: 'linear-gradient(135deg, #f87171, #facc15, #4ade80, #38bdf8, #a78bfa)' }
+                          : { background: c.hex ?? '#e8e8e8' }
+                      }
+                    />
                     <span className={styles.swatchLabel}>{c.label}</span>
                   </button>
                 ))}
@@ -458,63 +470,115 @@ export default function VisualizerPage() {
             <button className={styles.debugClose} onClick={() => setDebugOpen(false)}>✕</button>
           </div>
 
+          {/* ── 감지 주파수 범위 ── */}
+          <div className={styles.debugSection}>
+            <p className={styles.debugSectionTitle}>감지 주파수 범위</p>
+            {audioInfo ? (
+              <div className={styles.debugInfoGrid}>
+                <span className={styles.debugInfoLabel}>대역 통과 필터</span>
+                <span className={styles.debugInfoValue}>{audioInfo.filterMin} Hz ~ {audioInfo.filterMax.toLocaleString()} Hz</span>
+                <span className={styles.debugInfoLabel}>FFT 크기</span>
+                <span className={styles.debugInfoValue}>{audioInfo.fftSize.toLocaleString()} 포인트 ({audioInfo.binCount.toLocaleString()} 빈)</span>
+                <span className={styles.debugInfoLabel}>빈 해상도</span>
+                <span className={styles.debugInfoValue}>~{audioInfo.binWidth.toFixed(1)} Hz/빈</span>
+                <span className={styles.debugInfoLabel}>샘플레이트</span>
+                <span className={styles.debugInfoValue}>{(audioInfo.sampleRate / 1000).toFixed(1)} kHz</span>
+                <span className={styles.debugInfoLabel}>스무딩</span>
+                <span className={styles.debugInfoValue}>{audioInfo.smoothing}</span>
+              </div>
+            ) : (
+              <span className={styles.debugInfoValue}>마이크 연결 대기 중...</span>
+            )}
+          </div>
+
+          {/* ── 노이즈 제거 레이어 ── */}
+          <div className={styles.debugSection}>
+            <p className={styles.debugSectionTitle}>노이즈 제거 레이어</p>
+            <div className={styles.debugInfoGrid}>
+              <span className={styles.debugInfoLabel}>L1 브라우저</span>
+              <span className={styles.debugInfoValue}>noiseSuppression + echoCancellation</span>
+              <span className={styles.debugInfoLabel}>L2 Web Audio</span>
+              <span className={styles.debugInfoValue}>BPF 80 ~ 4,000 Hz (Q=0.7)</span>
+              <span className={styles.debugInfoLabel}>L3 voiceRatio</span>
+              <span className={styles.debugInfoValue}>음성 대역(85~3,500 Hz) 에너지 비율</span>
+            </div>
+          </div>
+
+          {/* ── 볼륨 미터 ── */}
           <div className={styles.debugSection}>
             <div className={styles.debugLabel}>
-              현재 볼륨
+              볼륨
               <span className={styles.debugValue}>{liveVolume.toFixed(3)}</span>
-              <span className={`${styles.debugBadge} ${isOverThreshold ? styles.speaking : styles.silent}`}>
-                {isOverThreshold ? '발화 중' : '침묵'}
+              <span className={`${styles.debugBadge} ${liveVolume >= threshold ? styles.speaking : styles.silent}`}>
+                {liveVolume >= threshold ? '통과' : '차단'}
               </span>
             </div>
             <div className={styles.meterTrack}>
               <div className={styles.meterThreshold} style={{ left: `${threshold * 100}%` }} />
               <div
-                className={`${styles.meterFill} ${isOverThreshold ? styles.meterActive : ''}`}
+                className={`${styles.meterFill} ${liveVolume >= threshold ? styles.meterActive : ''}`}
                 style={{ width: `${Math.min(liveVolume * 100, 100)}%` }}
               />
             </div>
             <div className={styles.meterLabels}>
               <span>0</span>
-              <span>threshold ({threshold.toFixed(2)})</span>
+              <span>임계 {threshold.toFixed(2)}</span>
               <span>1</span>
             </div>
           </div>
 
+          {/* ── voiceRatio 미터 ── */}
           <div className={styles.debugSection}>
             <div className={styles.debugLabel}>
-              음성 비율 (voiceRatio)
+              voiceRatio (L3 노이즈 게이트)
               <span className={styles.debugValue}>{liveVoiceRatio.toFixed(3)}</span>
-              <span className={`${styles.debugBadge} ${liveVoiceRatio >= 0.45 ? styles.speaking : styles.silent}`}>
-                {liveVoiceRatio >= 0.45 ? '목소리' : '노이즈'}
+              <span className={`${styles.debugBadge} ${liveVoiceRatio >= voiceRatioThreshold ? styles.speaking : styles.silent}`}>
+                {liveVoiceRatio >= voiceRatioThreshold ? '목소리' : '노이즈'}
               </span>
             </div>
             <div className={styles.meterTrack}>
-              <div className={styles.meterThreshold} style={{ left: '45%' }} />
+              <div className={styles.meterThreshold} style={{ left: `${voiceRatioThreshold * 100}%` }} />
               <div
-                className={`${styles.meterFill} ${liveVoiceRatio >= 0.45 ? styles.meterActive : ''}`}
+                className={`${styles.meterFill} ${liveVoiceRatio >= voiceRatioThreshold ? styles.meterActive : ''}`}
                 style={{ width: `${Math.min(liveVoiceRatio * 100, 100)}%` }}
               />
             </div>
             <div className={styles.meterLabels}>
               <span>0</span>
-              <span>기준 (0.45)</span>
+              <span>임계 {voiceRatioThreshold.toFixed(2)}</span>
               <span>1</span>
             </div>
           </div>
 
+          {/* ── 임계값 조정 ── */}
           <div className={styles.debugSection}>
+            <p className={styles.debugSectionTitle}>임계값 조정</p>
             <label className={styles.debugField}>
-              <span>임계값 (0~1)</span>
+              <span>볼륨 임계값</span>
               <input
-                type="number" step="0.01" min="0.01" max="0.99"
+                type="range" step="0.01" min="0.01" max="0.99"
                 value={threshold}
-                onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) setThreshold(v); }}
-                className={styles.debugInput}
+                onChange={(e) => setThreshold(parseFloat(e.target.value))}
+                className={styles.debugSlider}
               />
+              <span className={styles.debugValue}>{threshold.toFixed(2)}</span>
+            </label>
+            <label className={styles.debugField}>
+              <span>노이즈 게이트 (voiceRatio)</span>
+              <input
+                type="range" step="0.01" min="0.00" max="0.99"
+                value={voiceRatioThreshold}
+                onChange={(e) => setVoiceRatioThreshold(parseFloat(e.target.value))}
+                className={styles.debugSlider}
+              />
+              <span className={styles.debugValue}>{voiceRatioThreshold.toFixed(2)}</span>
             </label>
           </div>
 
-          <button className={styles.debugReset} onClick={() => setThreshold(DEFAULT_THRESHOLD)}>
+          <button
+            className={styles.debugReset}
+            onClick={() => { setThreshold(DEFAULT_THRESHOLD); setVoiceRatioThreshold(0.45); }}
+          >
             기본값으로 초기화
           </button>
         </div>
