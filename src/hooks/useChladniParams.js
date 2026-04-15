@@ -12,7 +12,7 @@ import { mapFeaturesToChladni } from '../utils/chladniMath';
 const ALPHA_SHAPE     = 0.025;
 const ALPHA_PHASE     = 0.04;
 const ALPHA_THRESHOLD = 0.1;
-const ALPHA_HUE       = 0.12; // 색상 반응 속도 (클수록 빠름 — 말할 때 실시간 변화)
+const ALPHA_HUE       = 0.05; // 색상 반응 속도 (클수록 빠름 — 부드러운 전환 위해 낮춤)
 
 const UPDATE_VOLUME_MIN = 0.05;
 

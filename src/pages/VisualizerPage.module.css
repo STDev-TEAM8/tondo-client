@@ -443,9 +443,20 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background: #f59e0b;
+  background: #f59e0b; /* 주황 — 유효 감지 임계선 (노이즈 플로어 × SNR 배수) */
   z-index: 2;
   transform: translateX(-50%);
+}
+
+.meterNoiseLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #facc15; /* 노란색 — 현재 노이즈 플로어 수준 */
+  z-index: 2;
+  transform: translateX(-50%);
+  opacity: 0.7;
 }
 
 .meterLabels {

@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAudioAnalyzer } from '../hooks/useAudioAnalyzer';
 import { useChladniParams } from '../hooks/useChladniParams';
+import { useAdaptiveVAD } from '../hooks/useAdaptiveVAD';
 import { computeAverageFeatures } from '../utils/audioFeatures';
 import {
   createParticles,
@@ -15,8 +16,8 @@ import { canvasToBase64 } from '../utils/imageUtils';
 import { requestArtwork, getOrCreateUUID } from '../api/artworkApi';
 import styles from './VisualizerPage.module.css';
 
-const DEFAULT_THRESHOLD = 0.08;
-const PARTICLE_COUNT    = 40000;
+const DEFAULT_SNR_MULTIPLIER = 0.5;  // 노이즈 플로어 대비 배수
+const PARTICLE_COUNT         = 40000;
 const REBUILD_DELTA     = 0.04;
 const SILENCE_HOLD_MS   = 1200; // 침묵 후 흩어지기 전 유예 시간 (ms)
 
@@ -53,12 +54,12 @@ export default function VisualizerPage() {
   // ── 상태 ─────────────────────────────────────────────────────────────────────
   const [phase, setPhase] = useState('idle');
   // 'idle' | 'setup' | 'recording' | 'preview' | 'sending' | 'error'
-  const [threshold, setThreshold]                   = useState(DEFAULT_THRESHOLD);
-  const [voiceRatioThreshold, setVoiceRatioThreshold] = useState(0.45);
-  const [liveVolume, setLiveVolume]                 = useState(0);
-  const [liveVoiceRatio, setLiveVoiceRatio]         = useState(0);
-  const [selectedColor, setSelectedColor]           = useState(COLOR_PALETTE[0]);
-  const [sendError, setSendError]                   = useState(null);
+  const [snrMultiplier, setSnrMultiplier]             = useState(DEFAULT_SNR_MULTIPLIER);
+  const [voiceRatioThreshold, setVoiceRatioThreshold] = useState(0.30);
+  const [liveVolume, setLiveVolume]                   = useState(0);
+  const [liveVoiceRatio, setLiveVoiceRatio]           = useState(0);
+  const [selectedColor, setSelectedColor]             = useState(COLOR_PALETTE[0]);
+  const [sendError, setSendError]                     = useState(null);
 
   // ── 디버그 패널 ──────────────────────────────────────────────────────────────
   const [debugOpen, setDebugOpen] = useState(false);
@@ -78,6 +79,7 @@ export default function VisualizerPage() {
   // ── 오디오 & 클라드니 EMA ─────────────────────────────────────────────────────
   const { features, isReady, error: micError, audioInfo, start, stop } = useAudioAnalyzer();
   const { update: updateChladni, reset: resetChladni } = useChladniParams();
+  const { update: vadUpdate, reset: resetVAD, noiseFloor } = useAdaptiveVAD();
 
   // ── 캔버스 초기화 (리사이즈 포함) ─────────────────────────────────────────────
   useEffect(() => {
@@ -112,12 +114,16 @@ export default function VisualizerPage() {
     return () => stop();
   }, [start, stop]);
 
-  // ── idle/setup 에서 liveVolume 업데이트 (VAD 미터용) ─────────────────────────
+  // ── idle/setup 에서 liveVolume 업데이트 + 노이즈 플로어 사전 누적 ──────────────
+  // 녹음 시작 전부터 배경 소음 수준을 파악해 두어야 recording 첫 프레임부터 정확히 작동함
   useEffect(() => {
     if (!isReady || (phase !== 'idle' && phase !== 'setup')) return;
-    setLiveVolume(features.volume);
-    setLiveVoiceRatio(features.voiceRatio ?? 0);
-  }, [features, isReady, phase]);
+    const vol = features.volume;
+    const vr  = features.voiceRatio ?? 0;
+    setLiveVolume(vol);
+    setLiveVoiceRatio(vr);
+    vadUpdate(vol, vr, snrMultiplier, voiceRatioThreshold); // 플로어 누적만 (결과 무시)
+  }, [features, isReady, phase, snrMultiplier, voiceRatioThreshold, vadUpdate]);
 
   // ── phase 전환 시 캔버스 1회 렌더 (recording/preview 제외) ───────────────────
   useEffect(() => {
@@ -229,7 +235,7 @@ export default function VisualizerPage() {
     setLiveVolume(vol);
     setLiveVoiceRatio(vr);
 
-    const isSpeaking = vol >= threshold && vr >= voiceRatioThreshold;
+    const { isSpeaking } = vadUpdate(vol, vr, snrMultiplier, voiceRatioThreshold);
 
     if (isSpeaking) {
       // 목소리 감지: 침묵 타이머 취소, 절점 수렴
@@ -307,7 +313,7 @@ export default function VisualizerPage() {
         : hslToRgbArray(`hsl(${selectedColor.hue}, 100%, 55%)`);
     renderAndFlush(canvas, rgb, false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [features, isReady, phase, threshold, voiceRatioThreshold, updateChladni, selectedColor]);
+  }, [features, isReady, phase, snrMultiplier, voiceRatioThreshold, vadUpdate, updateChladni, selectedColor]);
 
   // ── 마이크 오류 ──────────────────────────────────────────────────────────────
   if (micError) {
@@ -319,7 +325,8 @@ export default function VisualizerPage() {
     );
   }
 
-  const isOverThreshold = liveVolume >= threshold && liveVoiceRatio >= voiceRatioThreshold;
+  const liveSNR         = noiseFloor > 0 ? liveVolume / noiseFloor : 0;
+  const isOverThreshold = liveSNR >= snrMultiplier && liveVoiceRatio >= voiceRatioThreshold;
 
   return (
     <div className={styles.container}>
@@ -352,17 +359,20 @@ export default function VisualizerPage() {
           <div className={styles.setupPanel}>
             <p className={styles.setupTitle}>목소리 설정</p>
 
-            {/* VAD 미터 */}
+            {/* VAD 미터 — SNR 기반 */}
             <div className={styles.setupSection}>
               <div className={styles.debugLabel}>
-                볼륨
-                <span className={styles.debugValue}>{liveVolume.toFixed(3)}</span>
+                목소리 감지
+                <span className={styles.debugValue}>SNR {liveSNR.toFixed(1)}×</span>
                 <span className={`${styles.debugBadge} ${isOverThreshold ? styles.speaking : styles.silent}`}>
                   {isOverThreshold ? '감지됨' : '대기 중'}
                 </span>
               </div>
               <div className={styles.meterTrack}>
-                <div className={styles.meterThreshold} style={{ left: `${threshold * 100}%` }} />
+                {/* 노이즈 플로어 선 (노란색) */}
+                <div className={styles.meterNoiseLine} style={{ left: `${Math.min(noiseFloor * 100, 99)}%` }} />
+                {/* 유효 감지 임계선 (주황색) — 노이즈 플로어 × SNR 배수 */}
+                <div className={styles.meterThreshold} style={{ left: `${Math.min(noiseFloor * snrMultiplier * 100, 99)}%` }} />
                 <div
                   className={`${styles.meterFill} ${isOverThreshold ? styles.meterActive : ''}`}
                   style={{ width: `${Math.min(liveVolume * 100, 100)}%` }}
@@ -370,17 +380,18 @@ export default function VisualizerPage() {
               </div>
               <div className={styles.meterLabels}>
                 <span>조용</span>
-                <span>임계값 {threshold.toFixed(2)}</span>
+                <span>노이즈 {noiseFloor.toFixed(3)}</span>
                 <span>크게</span>
               </div>
               <label className={styles.debugField}>
-                <span>임계값 조정</span>
+                <span>감도 (SNR 배수)</span>
                 <input
-                  type="number" step="0.01" min="0.01" max="0.99"
-                  value={threshold}
-                  onChange={(e) => { const v = parseFloat(e.target.value); if (!isNaN(v)) setThreshold(v); }}
-                  className={styles.debugInput}
+                  type="range" step="0.1" min="0.1" max="5.0"
+                  value={snrMultiplier}
+                  onChange={(e) => setSnrMultiplier(parseFloat(e.target.value))}
+                  className={styles.debugSlider}
                 />
+                <span className={styles.debugValue}>{snrMultiplier.toFixed(1)}×</span>
               </label>
             </div>
 
@@ -504,25 +515,26 @@ export default function VisualizerPage() {
             </div>
           </div>
 
-          {/* ── 볼륨 미터 ── */}
+          {/* ── SNR 미터 ── */}
           <div className={styles.debugSection}>
             <div className={styles.debugLabel}>
-              볼륨
-              <span className={styles.debugValue}>{liveVolume.toFixed(3)}</span>
-              <span className={`${styles.debugBadge} ${liveVolume >= threshold ? styles.speaking : styles.silent}`}>
-                {liveVolume >= threshold ? '통과' : '차단'}
+              볼륨 / SNR
+              <span className={styles.debugValue}>{liveVolume.toFixed(3)} / {liveSNR.toFixed(1)}×</span>
+              <span className={`${styles.debugBadge} ${isOverThreshold ? styles.speaking : styles.silent}`}>
+                {isOverThreshold ? '발화 중' : '침묵'}
               </span>
             </div>
             <div className={styles.meterTrack}>
-              <div className={styles.meterThreshold} style={{ left: `${threshold * 100}%` }} />
+              <div className={styles.meterNoiseLine} style={{ left: `${Math.min(noiseFloor * 100, 99)}%` }} />
+              <div className={styles.meterThreshold} style={{ left: `${Math.min(noiseFloor * snrMultiplier * 100, 99)}%` }} />
               <div
-                className={`${styles.meterFill} ${liveVolume >= threshold ? styles.meterActive : ''}`}
+                className={`${styles.meterFill} ${isOverThreshold ? styles.meterActive : ''}`}
                 style={{ width: `${Math.min(liveVolume * 100, 100)}%` }}
               />
             </div>
             <div className={styles.meterLabels}>
               <span>0</span>
-              <span>임계 {threshold.toFixed(2)}</span>
+              <span>노이즈 {noiseFloor.toFixed(3)}</span>
               <span>1</span>
             </div>
           </div>
@@ -554,14 +566,14 @@ export default function VisualizerPage() {
           <div className={styles.debugSection}>
             <p className={styles.debugSectionTitle}>임계값 조정</p>
             <label className={styles.debugField}>
-              <span>볼륨 임계값</span>
+              <span>SNR 배수 (감도)</span>
               <input
-                type="range" step="0.01" min="0.01" max="0.99"
-                value={threshold}
-                onChange={(e) => setThreshold(parseFloat(e.target.value))}
+                type="range" step="0.1" min="0.1" max="5.0"
+                value={snrMultiplier}
+                onChange={(e) => setSnrMultiplier(parseFloat(e.target.value))}
                 className={styles.debugSlider}
               />
-              <span className={styles.debugValue}>{threshold.toFixed(2)}</span>
+              <span className={styles.debugValue}>{snrMultiplier.toFixed(1)}×</span>
             </label>
             <label className={styles.debugField}>
               <span>노이즈 게이트 (voiceRatio)</span>
@@ -577,7 +589,7 @@ export default function VisualizerPage() {
 
           <button
             className={styles.debugReset}
-            onClick={() => { setThreshold(DEFAULT_THRESHOLD); setVoiceRatioThreshold(0.45); }}
+            onClick={() => { setSnrMultiplier(DEFAULT_SNR_MULTIPLIER); setVoiceRatioThreshold(0.30); }}
           >
             기본값으로 초기화
           </button>

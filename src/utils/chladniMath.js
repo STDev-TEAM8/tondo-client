@@ -63,24 +63,54 @@ export function mapFeaturesToChladni(features) {
 }
 
 /**
- * 기본 주파수 대역을 목소리 특성 기반 색상으로 변환
+ * 기본 주파수(F0)를 일상 목소리 범주별 색상으로 변환
  *
- * 인간 목소리 F0 구간별 색상 팔레트 (어두운 영역 제외: S=100%, L=55%):
- *   80~130 Hz  (남성 저음/베이스)   → 빨강~주황   H:  0~40
- *  130~180 Hz  (남성 바리톤/테너)   → 주황~노랑   H: 40~80
- *  180~230 Hz  (남녀 경계 대역)     → 노랑~연두   H: 80~120
- *  230~300 Hz  (여성 알토/메조)     → 연두~초록   H:120~160
- *  300~390 Hz  (여성 소프라노 低)   → 초록~청록   H:160~210
- *  390~520 Hz  (여성 소프라노 高)   → 청록~파랑   H:210~255
- *  520 Hz 이상 (가성/아동/고음)     → 파랑~보라   H:255~300
+ * 앵커 포인트 [Hz → Hue] — 구간 사이는 선형 보간
+ *
+ *   80  Hz  낮은 남자 목소리  → 빨강    H:  0
+ *  130  Hz  평균 남자 목소리  → 주황    H: 30
+ *  175  Hz  높은 남자 목소리  → 노랑    H: 60
+ *  215  Hz  낮은 여자 목소리  → 초록    H:120
+ *  260  Hz  평균 여자 목소리  → 청록    H:180
+ *  320  Hz  높은 여자 목소리  → 파랑    H:240
+ *  400  Hz  매우 높은 여자    → 마젠타  H:300
  *
  * @param {number} freqBand - 기본 주파수 Hz
  * @returns {string} HSL 색상 문자열
  */
+
+// [Hz, Hue] 앵커 포인트 (오름차순)
+const VOICE_COLOR_ANCHORS = [
+  [80,  0],   // 낮은 남자   → 빨강
+  [130, 30],  // 평균 남자   → 주황
+  [175, 60],  // 높은 남자   → 노랑
+  [215, 120], // 낮은 여자   → 초록
+  [260, 180], // 평균 여자   → 청록
+  [320, 240], // 높은 여자   → 파랑
+  [400, 300], // 매우 높은 여자 → 마젠타
+];
+
 export function freqBandToColor(freqBand) {
-  const hue = clamp(mapRange(freqBand, 80, 600, 0, 300), 0, 300);
-  // S=100% (최대 채도), L=55% (어두운 하단 영역 제외 — 밝고 선명한 팔레트)
-  return `hsl(${hue.toFixed(1)}, 100%, 55%)`;
+  const anchors = VOICE_COLOR_ANCHORS;
+
+  // 범위 밖 처리
+  if (freqBand <= anchors[0][0])
+    return `hsl(${anchors[0][1]}, 100%, 55%)`;
+  if (freqBand >= anchors[anchors.length - 1][0])
+    return `hsl(${anchors[anchors.length - 1][1]}, 100%, 55%)`;
+
+  // 해당 구간 탐색 후 선형 보간
+  for (let i = 0; i < anchors.length - 1; i++) {
+    const [f0, h0] = anchors[i];
+    const [f1, h1] = anchors[i + 1];
+    if (freqBand >= f0 && freqBand <= f1) {
+      const t   = (freqBand - f0) / (f1 - f0);
+      const hue = h0 + t * (h1 - h0);
+      return `hsl(${hue.toFixed(1)}, 100%, 55%)`;
+    }
+  }
+
+  return `hsl(0, 100%, 55%)`;
 }
 
 /**

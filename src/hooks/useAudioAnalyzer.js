@@ -52,11 +52,12 @@ export function useAudioAnalyzer() {
 
   const start = useCallback(async () => {
     try {
-      // 레이어 1: 브라우저 네이티브 노이즈 억제
+      // 브라우저 noiseSuppression 은 군중 환경에서 목소리도 같이 억제하므로 OFF
+      // 노이즈 제거는 Web Audio BPF(L2) + 적응형 SNR 게이트(L3)가 담당
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          noiseSuppression: true,
-          echoCancellation: true,
+          noiseSuppression: false,
+          echoCancellation: false,
           autoGainControl: false,
         },
         video: false,
@@ -100,9 +101,10 @@ export function useAudioAnalyzer() {
         fftSize: analyser.fftSize,
         binCount: bufferLength,
         binWidth: binWidth,          // Hz/bin
-        filterMin: 80,               // highpass 컷오프
-        filterMax: 4000,             // lowpass 컷오프
+        filterMin: 80,
+        filterMax: 4000,
         smoothing: analyser.smoothingTimeConstant,
+        noiseSuppression: false,     // 브라우저 억제 비활성화
       });
 
       setIsReady(true);
