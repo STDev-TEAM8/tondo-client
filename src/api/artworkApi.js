@@ -16,14 +16,14 @@ const IS_MOCK = !BASE_URL;
 export async function signup({ name, phoneNumber }) {
   if (IS_MOCK) {
     await delay(500);
-    console.log('[TonDo] 🧪 Mock signup:', { name, phoneNumber });
+    console.log('[TonDo] 🧪 Mock signup:', { username: name, phoneNumber });
     return;
   }
 
   const res = await fetch(`${BASE_URL}/api/v1/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, phoneNumber }),
+    body: JSON.stringify({ username: name, phoneNumber }),
   });
 
   if (!res.ok) throw new Error(`signup 실패: ${res.status}`);
@@ -44,9 +44,9 @@ export async function requestArtwork({ uuid, avgPitch, avgVolume, avgTimbre, ima
     body: JSON.stringify({
       uuid,
       averageHz: avgPitch,
-      averageVolulme: avgVolume,
+      averageVolume: avgVolume,
       averageTimbre: avgTimbre,
-      base64Image: imageBase64,
+      base64Image: imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64,
     }),
   });
 
