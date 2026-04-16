@@ -43,20 +43,29 @@
 }
 
 /* ── Section 1: 타이틀 ── */
+/* 캔버스(position:absolute)보다 위에 렌더되도록 z-index 확보 */
+.eyebrow,
+.title,
+.description,
+.scrollHint {
+  position: relative;
+  z-index: 1;
+}
+
 .eyebrow {
-  font-size: 12px;
+  font-size: 20px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #666;
+  color: #ffffff;
   margin-bottom: 16px;
 }
 
 .title {
-  font-size: clamp(64px, 18vw, 96px);
+  font-size: clamp(192px, 18vw, 96px);
   font-weight: 700;
   letter-spacing: -3px;
   line-height: 1;
-  background: linear-gradient(135deg, #ff3cac, #784ba0, #2b86c5);
+  background: linear-gradient(135deg, #ffd5ed, #deb9ff, #cae9ff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -64,16 +73,16 @@
 }
 
 .description {
-  font-size: 15px;
+  font-size: 20px;
   line-height: 1.8;
-  color: #888;
-  max-width: 320px;
+  color: #a7a7a7;
+  max-width: 400px;
   margin-bottom: 48px;
 }
 
 .scrollHint {
-  font-size: 12px;
-  color: #444;
+  font-size: 16px;
+  color: #464646;
   letter-spacing: 0.05em;
   animation: hintBob 2s ease-in-out infinite;
 }
@@ -138,7 +147,9 @@
   font-weight: 600;
   color: #000;
   background: #fff;
+  border: none;
   border-radius: 50px;
+  cursor: pointer;
   transition: opacity 0.2s, transform 0.15s;
 }
 

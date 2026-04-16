@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSSE } from '../hooks/useSSE';
+import { useAnimatedProgress } from '../hooks/useAnimatedProgress';
 import styles from './WaitingPage.module.css';
 
 /**
@@ -15,6 +16,7 @@ export default function WaitingPage() {
   const { taskId, uuid } = location.state ?? {};
 
   const { progress, isDone, sseError, connect } = useSSE();
+  const displayPercent = useAnimatedProgress(progress.percent);
   const [isLoading, setIsLoading] = useState(false);
 
   // taskId가 없으면 랜딩으로
@@ -52,10 +54,10 @@ export default function WaitingPage() {
         <div className={styles.progressBar}>
           <div
             className={styles.progressFill}
-            style={{ width: `${progress.percent}%` }}
+            style={{ width: `${displayPercent.toFixed(1)}%` }}
           />
         </div>
-        <p className={styles.percent}>{progress.percent}%</p>
+        <p className={styles.percent}>{Math.round(displayPercent)}%</p>
 
         {isDone && (
           <button

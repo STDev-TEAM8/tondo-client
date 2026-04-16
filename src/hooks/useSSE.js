@@ -28,13 +28,12 @@ export function useSSE() {
     setProgress({ percent: 0, status: '연결 중...' });
 
     // ── 모의 SSE (서버 없을 때) ────────────────────────────────────────────────
+    // 실제 서버도 25% 단위로 진행률을 전송함 — mock도 동일하게 맞춤
     if (taskId.startsWith('mock_')) {
       const steps = [
-        { percent: 15, status: '주파수 맵핑 중' },
-        { percent: 35, status: '주파수 맵핑 중' },
-        { percent: 55, status: 'AI 렌더링 중' },
-        { percent: 75, status: 'AI 렌더링 중' },
-        { percent: 92, status: '작품 마감 중' },
+        { percent: 25,  status: '주파수 맵핑 중' },
+        { percent: 50,  status: 'AI 렌더링 중' },
+        { percent: 75,  status: '작품 마감 중' },
         { percent: 100, status: '완료' },
       ];
 
@@ -46,7 +45,7 @@ export function useSSE() {
           setIsDone(true);
         }
         i++;
-      }, 1200);
+      }, 2000);
 
       cleanupRef.current = () => clearInterval(id);
       return;

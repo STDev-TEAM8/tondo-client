@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { CosmicBg } from '../components/CosmicBg';
 import { useNavigate } from 'react-router-dom';
 import { signup } from '../api/artworkApi';
 import styles from './LandingPage.module.css';
@@ -7,8 +8,8 @@ const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const scrollRef = useRef(null);
-  const touchYRef = useRef(0);
+  const scrollRef  = useRef(null);
+  const touchYRef  = useRef(0);
 
   const [progress, setProgress] = useState(0); // 0(타이틀) → 1(폼)
   const [name, setName]   = useState('');
@@ -109,6 +110,7 @@ export default function LandingPage() {
           pointerEvents: progress >= 0.5 ? 'none' : 'auto',
         }}
       >
+        <CosmicBg />
         <p className={styles.eyebrow}>당신의 목소리가 예술이 됩니다</p>
         <h1 className={styles.title}>TonDo</h1>
         <p className={styles.description}>
