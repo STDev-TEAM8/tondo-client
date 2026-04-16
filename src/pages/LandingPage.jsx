@@ -13,12 +13,17 @@ export default function LandingPage() {
   const touchYRef  = useRef(0);
 
   const [progress, setProgress] = useState(0); // 0(타이틀) → 1(폼)
-  const [name, setName]   = useState('');
-  const [phone, setPhone] = useState('');
+  const [name, setName] = useState('');
+  const [pin, setPin]   = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError]   = useState(null);
+  const [error, setError]     = useState(null);
 
-  const canStart = name.trim().length > 0 && phone.replace(/\D/g, '').length >= 10;
+  const canStart = name.trim().length > 0 && pin.length === 4;
+
+  const handlePinChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+    setPin(digits);
+  };
 
   // ── 스크롤 진행도 ──
   const handleScroll = useCallback(() => {
@@ -52,14 +57,6 @@ export default function LandingPage() {
     el.scrollTop = delta > 0 ? max : 0;
   }, []);
 
-  // ── 전화번호 자동 포맷 ──
-  const handlePhoneChange = (e) => {
-    const d = e.target.value.replace(/\D/g, '').slice(0, 11);
-    let fmt = d;
-    if (d.length > 7)      fmt = `${d.slice(0,3)}-${d.slice(3,7)}-${d.slice(7)}`;
-    else if (d.length > 3) fmt = `${d.slice(0,3)}-${d.slice(3)}`;
-    setPhone(fmt);
-  };
 
   // ── 체험 시작 ──
   const handleStart = async () => {
@@ -67,7 +64,7 @@ export default function LandingPage() {
     setLoading(true);
     setError(null);
     try {
-      await signup({ name: name.trim(), phoneNumber: phone.replace(/\D/g, '') });
+      await signup({ name: name.trim(), password: pin });
       await navigator.mediaDevices.getUserMedia({ audio: true });
       navigate('/visualizer');
     } catch (err) {
@@ -160,10 +157,12 @@ export default function LandingPage() {
             />
             <input
               className={styles.input}
-              type="tel"
-              placeholder="010-0000-0000"
-              value={phone}
-              onChange={handlePhoneChange}
+              type="password"
+              inputMode="numeric"
+              placeholder="비밀번호 4자리"
+              value={pin}
+              onChange={handlePinChange}
+              maxLength={4}
             />
           </div>
 
