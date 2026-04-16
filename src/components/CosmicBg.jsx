@@ -51,7 +51,7 @@ export function CosmicBg() {
           vy:        (Math.random() - 0.5) * 0.3,
           color:     p.main,
           glow:      p.glow,
-          hasRing:   Math.random() > 0.7,
+          hasRing:   Math.random() > 0.5,
           ringAngle: Math.random() * Math.PI,
         };
       });
