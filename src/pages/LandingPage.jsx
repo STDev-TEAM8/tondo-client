@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { CosmicBg } from '../components/CosmicBg';
+import { CosmicBgLogin } from '../components/CosmicBgLogin';
 import { useNavigate } from 'react-router-dom';
 import { signup } from '../api/artworkApi';
 import styles from './LandingPage.module.css';
@@ -31,7 +32,9 @@ export default function LandingPage() {
   const handleSection2Wheel = useCallback((e) => {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollTop += e.deltaY;
+    const max = el.scrollHeight - el.clientHeight;
+    // 방향에 따라 스냅 포인트로 즉시 점프 → sections CSS transition이 시각적 전환 처리
+    el.scrollTop = e.deltaY < 0 ? 0 : max;
   }, []);
 
   const handleSection2TouchStart = useCallback((e) => {
@@ -45,7 +48,8 @@ export default function LandingPage() {
     if (!el) return;
     const delta = touchYRef.current - e.touches[0].clientY;
     touchYRef.current = e.touches[0].clientY;
-    el.scrollTop += delta;
+    const max = el.scrollHeight - el.clientHeight;
+    el.scrollTop = delta > 0 ? max : 0;
   }, []);
 
   // ── 전화번호 자동 포맷 ──
@@ -77,12 +81,12 @@ export default function LandingPage() {
   };
 
   // ── 애니메이션 값 ──
-  const s1p         = clamp(progress / 0.65, 0, 1);
-  const s1Opacity   = 1 - s1p;
+  const s1p          = clamp(progress / 0.65, 0, 1);
+  const s1Opacity    = 1 - s1p;
   const s1TranslateY = -s1p * 80;
 
-  const s2p         = clamp((progress - 0.35) / 0.65, 0, 1);
-  const s2Opacity   = s2p;
+  const s2Opacity    = s1p;                                        // s1과 동일 구간 → 합 = 1
+  const s2p          = clamp((progress - 0.35) / 0.65, 0, 1);    // translateY는 별도
   const s2TranslateY = (1 - s2p) * 80;
 
   // 폼이 활성화되면 section2를 scroller 위로 올려서 입력 가능하게 함
@@ -98,7 +102,8 @@ export default function LandingPage() {
         className={styles.scroller}
         onScroll={handleScroll}
       >
-        <div className={styles.spacer} />
+        <div className={styles.snapPoint} />
+        <div className={styles.snapPoint} />
       </div>
 
       {/* ── Section 1: 타이틀 + 설명 ── */}
@@ -121,57 +126,66 @@ export default function LandingPage() {
         <p className={styles.scrollHint}>아래로 스크롤하여 시작하기</p>
       </div>
 
-      {/* ── Section 2: 등록 폼 ── */}
+      {/* ── Section 2: 좌우 분할 ── */}
       <div
         className={styles.section2}
         style={{
           opacity: s2Opacity,
           transform: `translateY(${s2TranslateY}px)`,
-          // 활성화 시 scroller(z-index:10) 위로 올라와 입력 가능
           zIndex: formActive ? 11 : 1,
         }}
         onWheel={handleSection2Wheel}
         onTouchStart={handleSection2TouchStart}
         onTouchMove={handleSection2TouchMove}
       >
-        <p className={styles.formTitle}>체험 등록</p>
+        <CosmicBgLogin />
 
-        <div className={styles.formGroup}>
-          <input
-            className={styles.input}
-            type="text"
-            placeholder="이름"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={20}
-          />
-          <input
-            className={styles.input}
-            type="tel"
-            placeholder="010-0000-0000"
-            value={phone}
-            onChange={handlePhoneChange}
-          />
+        {/* 왼쪽: 비주얼 */}
+        <div className={styles.section2Left}>
+          <img src="/ref2.jpg" alt="" className={styles.section2LeftImg} />
         </div>
 
-        <div
-          className={styles.btnWrap}
-          style={{
-            opacity: canStart ? 1 : 0,
-            transform: canStart ? 'translateY(0)' : 'translateY(14px)',
-            pointerEvents: canStart ? 'auto' : 'none',
-          }}
-        >
-          <button
-            className={styles.startButton}
-            onClick={handleStart}
-            disabled={loading || !canStart}
+        {/* 오른쪽: 폼 */}
+        <div className={styles.section2Right}>
+          <p className={styles.formTitle}>체험 등록</p>
+
+          <div className={styles.formGroup}>
+            <input
+              className={styles.input}
+              type="text"
+              placeholder="이름"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={20}
+            />
+            <input
+              className={styles.input}
+              type="tel"
+              placeholder="010-0000-0000"
+              value={phone}
+              onChange={handlePhoneChange}
+            />
+          </div>
+
+          <div
+            className={styles.btnWrap}
+            style={{
+              opacity: canStart ? 1 : 0,
+              transform: canStart ? 'translateY(0)' : 'translateY(14px)',
+              pointerEvents: canStart ? 'auto' : 'none',
+            }}
           >
-            {loading ? '확인 중...' : '체험 시작하기'}
-          </button>
-        </div>
+            <button
+              className={styles.startButton}
+              onClick={handleStart}
+              disabled={loading || !canStart}
+            >
+              {loading ? '확인 중...' : '체험 시작하기'}
+            </button>
+          </div>
 
-        {error && <p className={styles.error}>{error}</p>}
+          {error && <p className={styles.error}>{error}</p>}
+        </div>
       </div>
 
     </div>

@@ -15,15 +15,18 @@
   inset: 0;
   overflow-y: scroll;
   z-index: 10;
-  scrollbar-width: none;   /* Firefox */
+  scrollbar-width: none;
+  scroll-snap-type: y mandatory; /* 스냅 활성화 */
 }
 .scroller::-webkit-scrollbar {
-  display: none;           /* Chrome/Safari */
+  display: none;
 }
 
-/* 스크롤 공간 확보 (200vh → 스크롤 범위 = 100vh) */
-.spacer {
-  height: 200vh;
+/* 스냅 포인트 2개 (각 100vh) — 스크롤 범위 = 100vh */
+.snapPoint {
+  height: 100vh;
+  scroll-snap-align: start;
+  flex-shrink: 0;
 }
 
 /* ── 공통 섹션 ── */
@@ -38,8 +41,8 @@
   padding: 40px 28px;
   text-align: center;
   z-index: 1;
-  /* will-change: 성능 최적화 */
   will-change: transform, opacity;
+  transition: opacity 1s ease, transform 1.1s ease;
 }
 
 /* ── Section 1: 타이틀 ── */
@@ -92,7 +95,66 @@
   50%       { transform: translateY(6px); opacity: 1;   }
 }
 
-/* ── Section 2: 폼 ── */
+/* ── Section 2: 좌우 분할 ── */
+.section2 {
+  flex-direction: row !important; /* 세로 → 가로 분할 */
+  align-items: stretch !important;
+  justify-content: stretch !important;
+  padding: 0 !important;
+}
+
+/* 왼쪽: 비주얼 영역 */
+.section2Left {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* 왼쪽 이미지 — 중앙 정렬, 로그인 폼보다 살짝 크게 */
+.section2Left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section2LeftImg {
+  width: 380px;
+  max-width: 90%;
+  height: auto;
+  border-radius: 16px;
+}
+
+/* 구분선 */
+.section2Divider {
+  position: relative;
+  z-index: 1;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+/* 오른쪽: 폼 영역 */
+.section2Right {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 28px;
+  z-index: 1;
+}
+
+/* 폼 요소 캔버스 위에 렌더 */
+.formTitle,
+.formGroup,
+.btnWrap,
+.error {
+  position: relative;
+  z-index: 1;
+}
+
 .formTitle {
   font-size: 13px;
   font-weight: 600;
