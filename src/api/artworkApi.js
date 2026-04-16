@@ -13,17 +13,17 @@ const IS_MOCK = !BASE_URL;
 /**
  * POST /api/v1/auth/signup  — 이름/전화번호 등록
  */
-export async function signup({ name, phoneNumber }) {
+export async function signup({ name, password }) {
   if (IS_MOCK) {
     await delay(500);
-    console.log('[TonDo] 🧪 Mock signup:', { username: name, phoneNumber });
+    console.log('[TonDo] 🧪 Mock signup:', { username: name, password });
     return;
   }
 
   const res = await fetch(`${BASE_URL}/api/v1/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: name, phoneNumber }),
+    body: JSON.stringify({ username: name, password }),
   });
 
   if (!res.ok) throw new Error(`signup 실패: ${res.status}`);
