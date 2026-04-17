@@ -44,7 +44,7 @@ export async function requestArtwork({ uuid, avgPitch, avgVolume, avgTimbre, voi
     body: JSON.stringify({
       uuid,
       averageHz: avgPitch,
-      averageVolulme: avgVolume,
+      averageVolume: avgVolume,
       averageTimbre: avgTimbre,
       voiceColor,
       base64Image: imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64,
