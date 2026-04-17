@@ -25,6 +25,9 @@ export default function LandingPage() {
   const [slideIdx, setSlideIdx] = useState(0);
   const carouselDragRef = useRef({ x: 0, y: 0 });
 
+  // 디바이스 목업
+  const [deviceType, setDeviceType] = useState('phone');
+
   // 이미지 2장 이상일 때 자동 슬라이드
   useEffect(() => {
     if (SLIDES.length <= 1) return;
@@ -116,9 +119,36 @@ export default function LandingPage() {
   const s2p          = clamp((progress - 0.35) / 0.65, 0, 1);    // translateY는 별도
   const s2TranslateY = (1 - s2p) * 80;
 
-  // 폼이 활성화되면 section2를 scroller 위로 올려서 입력 가능하게 함
-  // 동시에 section2에서 휠/터치 이벤트를 포워딩해 위로 되돌아가기 지원
   const formActive = progress >= 0.95;
+
+  const carousel = (
+    <div
+      className={styles.carousel}
+      onTouchStart={onCarouselTouchStart}
+      onTouchMove={onCarouselTouchMove}
+      onTouchEnd={onCarouselTouchEnd}
+    >
+      <div
+        className={styles.carouselTrack}
+        style={{ transform: `translateX(-${slideIdx * 100}%)` }}
+      >
+        {SLIDES.map((src, i) => (
+          <img key={i} src={src} alt="" className={styles.carouselImg} draggable={false} />
+        ))}
+      </div>
+      {SLIDES.length > 1 && (
+        <div className={styles.carouselDots}>
+          {SLIDES.map((_, i) => (
+            <button
+              key={i}
+              className={`${styles.carouselDot} ${i === slideIdx ? styles.carouselDotActive : ''}`}
+              onClick={() => setSlideIdx(i)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className={styles.outer}>
@@ -167,38 +197,41 @@ export default function LandingPage() {
       >
         <CosmicBgLogin />
 
-        {/* 왼쪽: 핸드폰 모형 + 카드 뉴스 스와이프 캐러셀 */}
+        {/* 왼쪽: 디바이스 목업 */}
         <div className={styles.section2Left}>
-          <div className={styles.phoneMock}>
-            <div className={styles.phoneScreen}>
-              <div
-                className={styles.carousel}
-                onTouchStart={onCarouselTouchStart}
-                onTouchMove={onCarouselTouchMove}
-                onTouchEnd={onCarouselTouchEnd}
+          <div className={styles.devicePicker} style={{ marginTop: '-11px' }}>
+            {['phone', 'watch', 'laptop'].map((d) => (
+              <button
+                key={d}
+                className={`${styles.deviceBtn} ${deviceType === d ? styles.deviceBtnActive : ''}`}
+                onClick={() => setDeviceType(d)}
               >
-                <div
-                  className={styles.carouselTrack}
-                  style={{ transform: `translateX(-${slideIdx * 100}%)` }}
-                >
-                  {SLIDES.map((src, i) => (
-                    <img key={i} src={src} alt="" className={styles.carouselImg} draggable={false} />
-                  ))}
-                </div>
-                {SLIDES.length > 1 && (
-                  <div className={styles.carouselDots}>
-                    {SLIDES.map((_, i) => (
-                      <button
-                        key={i}
-                        className={`${styles.carouselDot} ${i === slideIdx ? styles.carouselDotActive : ''}`}
-                        onClick={() => setSlideIdx(i)}
-                      />
-                    ))}
-                  </div>
-                )}
+                {d === 'phone' ? '폰' : d === 'watch' ? '워치' : '노트북'}
+              </button>
+            ))}
+          </div>
+
+          {deviceType === 'phone' && (
+            <div className={styles.phoneMock}>
+              <div className={styles.phoneScreen}>{carousel}</div>
+            </div>
+          )}
+
+          {deviceType === 'watch' && (
+            <div className={styles.watchWrapper}>
+              <div className={styles.watchMock}>
+                <div className={styles.watchCrown} />
+                <div className={styles.watchScreen}>{carousel}</div>
               </div>
             </div>
-          </div>
+          )}
+
+          {deviceType === 'laptop' && (
+            <div className={styles.laptopMock}>
+              <div className={styles.laptopScreen}>{carousel}</div>
+              <div className={styles.laptopBase} />
+            </div>
+          )}
         </div>
 
         {/* 오른쪽: 폼 */}
