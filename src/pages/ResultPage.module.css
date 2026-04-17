@@ -153,10 +153,12 @@
   border: 1px solid #222;
   border-radius: 12px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .accordionTrigger {
   width: 100%;
+  min-height: 56px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -165,6 +167,7 @@
   color: #e8e8e8;
   font-size: 15px;
   font-weight: 500;
+  line-height: 1.4;
   border: none;
   cursor: pointer;
   transition: background 0.15s;
