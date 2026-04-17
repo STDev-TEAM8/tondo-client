@@ -114,6 +114,31 @@ export function freqBandToColor(freqBand) {
 }
 
 /**
+ * 평균 피치와 선택된 테마 Hue를 바탕으로 최종 HSL 색상 추출
+ * @param {number} avgPitch - 평균 주파수 (Hz)
+ * @param {number|null|undefined} baseHue - 선택된 테마 Hue
+ */
+export function calculateFinalColor(avgPitch, baseHue) {
+  const voiceHueStr = freqBandToColor(avgPitch);
+  const match = voiceHueStr.match(/hsl\((\d+\.?\d*)/);
+  const voiceHue = match ? parseFloat(match[1]) : 0;
+
+  if (baseHue === null) {
+    return 'hsl(0, 0%, 88%)';
+  }
+  if (typeof baseHue === 'number') {
+    // 테마가 있을 경우: 테마 색 70% + 목소리 변차 30% 블렌딩
+    let diff = voiceHue - baseHue;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+    const finalHue = (baseHue + diff * 0.3 + 360) % 360;
+    return `hsl(${finalHue.toFixed(1)}, 100%, 55%)`;
+  }
+  // 기본(목소리) 모드
+  return `hsl(${voiceHue.toFixed(1)}, 100%, 55%)`;
+}
+
+/**
  * 캔버스에 클라드니 도형 렌더링
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} width
@@ -166,6 +191,29 @@ export function drawChladni(ctx, width, height, params, bw = false) {
 }
 
 // ─── 내부 유틸 ────────────────────────────────────────────────────────────────
+
+/**
+ * "hsl(H, S%, L%)" 문자열을 Hex Code(#RRGGBB)로 변환
+ */
+export function hslToHex(hslStr) {
+  const [r, g, b] = hslStringToRgb(hslStr);
+  return rgbToHex(r, g, b);
+}
+
+// ─── 내부 유틸 ────────────────────────────────────────────────────────────────
+
+function rgbToHex(r, g, b) {
+  return (
+    '#' +
+    [r, g, b]
+      .map((x) => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      })
+      .join('')
+      .toUpperCase()
+  );
+}
 
 function mapRange(value, inMin, inMax, outMin, outMax) {
   return ((value - inMin) / (inMax - inMin)) * (outMax - outMin) + outMin;

@@ -14,6 +14,7 @@ import {
 } from '../utils/chladniParticles';
 import { canvasToBase64 } from '../utils/imageUtils';
 import { requestArtwork, getOrCreateUUID } from '../api/artworkApi';
+import { hslToHex, calculateFinalColor } from '../utils/chladniMath';
 import styles from './VisualizerPage.module.css';
 
 const DEFAULT_SNR_MULTIPLIER = 0.5;  // 노이즈 플로어 대비 배수
@@ -184,9 +185,21 @@ export default function VisualizerPage() {
     isSendingRef.current = true;
     const { avgPitch, avgVolume, avgTimbre } = computeAverageFeatures(featureHistoryRef.current);
     const uuid = getOrCreateUUID();
+
+    // ── 목소리 색상Hex 추출 ──
+    const finalHsl = calculateFinalColor(avgPitch, selectedColor?.hue);
+    const voiceColor = hslToHex(finalHsl);
+
     setPhase('sending');
     setSendError(null);
-    requestArtwork({ uuid, avgPitch, avgVolume, avgTimbre, imageBase64: capturedBase64Ref.current })
+    requestArtwork({
+      uuid,
+      avgPitch,
+      avgVolume,
+      avgTimbre,
+      voiceColor,
+      imageBase64: capturedBase64Ref.current,
+    })
       .then(({ taskId }) => {
         stop();
         navigate('/waiting', { state: { taskId, uuid } });

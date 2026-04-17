@@ -33,9 +33,9 @@ export async function signup({ name, password }) {
  * POST /api/v1/artworks  — 이미지 생성 요청
  * @returns {Promise<{ taskId: string }>}
  */
-export async function requestArtwork({ uuid, avgPitch, avgVolume, avgTimbre, imageBase64 }) {
+export async function requestArtwork({ uuid, avgPitch, avgVolume, avgTimbre, voiceColor, imageBase64 }) {
   if (IS_MOCK) {
-    return mockRequestArtwork({ uuid, avgPitch, avgVolume, avgTimbre, imageBase64 });
+    return mockRequestArtwork({ uuid, avgPitch, avgVolume, avgTimbre, voiceColor, imageBase64 });
   }
 
   const res = await fetch(`${BASE_URL}/api/v1/artworks`, {
@@ -46,6 +46,7 @@ export async function requestArtwork({ uuid, avgPitch, avgVolume, avgTimbre, ima
       averageHz: avgPitch,
       averageVolulme: avgVolume,
       averageTimbre: avgTimbre,
+      voiceColor,
       base64Image: imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64,
     }),
   });
@@ -94,13 +95,14 @@ export function getOrCreateUUID() {
 
 // ─── 모의(Mock) 구현 ──────────────────────────────────────────────────────────
 
-async function mockRequestArtwork({ uuid, avgPitch, avgVolume, avgTimbre, imageBase64 }) {
+async function mockRequestArtwork({ uuid, avgPitch, avgVolume, avgTimbre, voiceColor, imageBase64 }) {
   // 콘솔에서 캡처 데이터 확인용 로그
   console.group('[TonDo] 🧪 모의 서버 전송 — 실제 서버가 연동되면 자동으로 제거됩니다');
   console.log('UUID        :', uuid);
   console.log('avgPitch    :', avgPitch.toFixed(1), 'Hz');
   console.log('avgVolume   :', avgVolume.toFixed(4));
   console.log('avgTimbre   :', avgTimbre.toFixed(1), 'Hz');
+  console.log('voiceColor  :', voiceColor);
   console.log('imageBase64 :', `${imageBase64.length} chars (앞 80자: ${imageBase64.slice(0, 80)}...)`);
 
   // 브라우저에서 캡처 이미지 미리보기 (새 탭)
