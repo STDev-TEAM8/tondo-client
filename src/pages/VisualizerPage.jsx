@@ -53,7 +53,7 @@ export default function VisualizerPage() {
   const touchTimerRef      = useRef(null);
 
   // ── 상태 ─────────────────────────────────────────────────────────────────────
-  const [phase, setPhase] = useState('idle');
+  const [phase, setPhase] = useState('setup');
   // 'idle' | 'setup' | 'recording' | 'preview' | 'sending' | 'error'
   const [snrMultiplier, setSnrMultiplier]             = useState(DEFAULT_SNR_MULTIPLIER);
   const [voiceRatioThreshold, setVoiceRatioThreshold] = useState(0.30);
@@ -137,9 +137,6 @@ export default function VisualizerPage() {
     renderAndFlush(canvas, rgb, false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
-
-  // ── idle → setup (설정 화면 진입) ────────────────────────────────────────────
-  const enterSetup = () => setPhase('setup');
 
   // ── setup → recording ────────────────────────────────────────────────────────
   const startRecording = () => {
@@ -342,31 +339,153 @@ export default function VisualizerPage() {
   const isOverThreshold = liveSNR >= snrMultiplier && liveVoiceRatio >= voiceRatioThreshold;
 
   return (
-    <div className={styles.container}>
-      {/* 캔버스 */}
-      <canvas
-        ref={canvasRef}
-        className={styles.canvas}
-        onContextMenu={handleCanvasContextMenu}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchMove={handleTouchEnd}
-      />
+    <div className={`${styles.container} ${phase === 'preview' ? styles.containerBlack : ''}`}>
+
+      {/* ── 캔버스 + 버튼을 하나로 묶어 중앙 정렬 ── */}
+      <div className={styles.canvasGroup}>
+        <canvas
+          ref={canvasRef}
+          className={styles.canvas}
+          onContextMenu={handleCanvasContextMenu}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchMove={handleTouchEnd}
+        />
+
+        {/* 녹음 컨트롤 — 캔버스 바로 아래, recording이 아닐 때 투명 */}
+        <div className={`${styles.controls} ${phase !== 'recording' ? styles.controlsHidden : ''}`}>
+          <p className={styles.recordHint}>
+            {isOverThreshold ? '목소리를 분석하고 있어요' : '말을 해보세요'}
+          </p>
+          <div className={styles.controlBtns}>
+            <button className={styles.backBtn} onClick={() => setPhase('setup')}>← 음성 설정</button>
+            <button className={styles.captureButton} onClick={handleCapture}>캡처</button>
+          </div>
+        </div>
+      </div>
 
       {/* 우상단 숨김 탭 (디버그) */}
       <div className={styles.cornerTap} onClick={handleCornerTap} />
 
-      {/* ── IDLE: 마이크 버튼 ── */}
-      {phase === 'idle' && (
-        <div className={styles.overlay}>
-          <button className={styles.micButton} onClick={enterSetup}>
-            <MicIcon />
-          </button>
-          <p className={styles.idleHint}>버튼을 누르고 말해보세요</p>
+      {/* ── PREVIEW: 캡처 확인 + 저장/전송 ── */}
+      {phase === 'preview' && (
+          <div className={styles.previewOverlay}>
+            <p className={styles.previewHint}>길게 눌러 이미지 저장</p>
+            <div className={styles.previewActions}>
+              <button className={styles.previewBtn} onClick={handleRetry}>
+                다시 녹음
+              </button>
+              <button className={`${styles.previewBtn} ${styles.previewBtnPrimary}`} onClick={handleSendToAI}>
+                AI로 보내기
+              </button>
+            </div>
+            {sendError && <p className={styles.errorMsg}>{sendError}</p>}
+          </div>
+        )}
+
+      {/* ── SENDING ── */}
+      {phase === 'sending' && (
+        <div className={styles.sendingOverlay}>
+          <div className={styles.sendingSpinner} />
+          <p>AI에게 전달 중...</p>
         </div>
       )}
 
-      {/* ── SETUP: VAD 설정 + 색상 선택 ── */}
+      {/* ── ERROR ── */}
+      {phase === 'error' && (
+        <div className={styles.overlay}>
+          <p className={styles.idleHint}>다시 시도하기</p>
+          {sendError && <p className={styles.errorMsg}>{sendError}</p>}
+          <button className={styles.backBtn} onClick={() => setPhase('setup')}>← 음성 설정</button>
+        </div>
+      )}
+
+      {/* ── 디버그 패널 (우상단 5회 탭으로 열기) ── */}
+      {debugOpen && (
+          <div className={styles.debugPanel}>
+            <div className={styles.debugHeader}>
+              <span>VAD 디버그</span>
+              <button className={styles.debugClose} onClick={() => setDebugOpen(false)}>✕</button>
+            </div>
+            <div className={styles.debugSection}>
+              <p className={styles.debugSectionTitle}>감지 주파수 범위</p>
+              {audioInfo ? (
+                <div className={styles.debugInfoGrid}>
+                  <span className={styles.debugInfoLabel}>대역 통과 필터</span>
+                  <span className={styles.debugInfoValue}>{audioInfo.filterMin} Hz ~ {audioInfo.filterMax.toLocaleString()} Hz</span>
+                  <span className={styles.debugInfoLabel}>FFT 크기</span>
+                  <span className={styles.debugInfoValue}>{audioInfo.fftSize.toLocaleString()} 포인트 ({audioInfo.binCount.toLocaleString()} 빈)</span>
+                  <span className={styles.debugInfoLabel}>빈 해상도</span>
+                  <span className={styles.debugInfoValue}>~{audioInfo.binWidth.toFixed(1)} Hz/빈</span>
+                  <span className={styles.debugInfoLabel}>샘플레이트</span>
+                  <span className={styles.debugInfoValue}>{(audioInfo.sampleRate / 1000).toFixed(1)} kHz</span>
+                  <span className={styles.debugInfoLabel}>스무딩</span>
+                  <span className={styles.debugInfoValue}>{audioInfo.smoothing}</span>
+                </div>
+              ) : (
+                <span className={styles.debugInfoValue}>마이크 연결 대기 중...</span>
+              )}
+            </div>
+            <div className={styles.debugSection}>
+              <p className={styles.debugSectionTitle}>노이즈 제거 레이어</p>
+              <div className={styles.debugInfoGrid}>
+                <span className={styles.debugInfoLabel}>L1 브라우저</span>
+                <span className={styles.debugInfoValue}>noiseSuppression + echoCancellation</span>
+                <span className={styles.debugInfoLabel}>L2 Web Audio</span>
+                <span className={styles.debugInfoValue}>BPF 80 ~ 4,000 Hz (Q=0.7)</span>
+                <span className={styles.debugInfoLabel}>L3 voiceRatio</span>
+                <span className={styles.debugInfoValue}>음성 대역(85~3,500 Hz) 에너지 비율</span>
+              </div>
+            </div>
+            <div className={styles.debugSection}>
+              <div className={styles.debugLabel}>
+                볼륨 / SNR
+                <span className={styles.debugValue}>{liveVolume.toFixed(3)} / {liveSNR.toFixed(1)}×</span>
+                <span className={`${styles.debugBadge} ${isOverThreshold ? styles.speaking : styles.silent}`}>
+                  {isOverThreshold ? '발화 중' : '침묵'}
+                </span>
+              </div>
+              <div className={styles.meterTrack}>
+                <div className={styles.meterNoiseLine} style={{ left: `${Math.min(noiseFloor * 100, 99)}%` }} />
+                <div className={styles.meterThreshold} style={{ left: `${Math.min(noiseFloor * snrMultiplier * 100, 99)}%` }} />
+                <div className={`${styles.meterFill} ${isOverThreshold ? styles.meterActive : ''}`} style={{ width: `${Math.min(liveVolume * 100, 100)}%` }} />
+              </div>
+              <div className={styles.meterLabels}><span>0</span><span>노이즈 {noiseFloor.toFixed(3)}</span><span>1</span></div>
+            </div>
+            <div className={styles.debugSection}>
+              <div className={styles.debugLabel}>
+                voiceRatio (L3 노이즈 게이트)
+                <span className={styles.debugValue}>{liveVoiceRatio.toFixed(3)}</span>
+                <span className={`${styles.debugBadge} ${liveVoiceRatio >= voiceRatioThreshold ? styles.speaking : styles.silent}`}>
+                  {liveVoiceRatio >= voiceRatioThreshold ? '목소리' : '노이즈'}
+                </span>
+              </div>
+              <div className={styles.meterTrack}>
+                <div className={styles.meterThreshold} style={{ left: `${voiceRatioThreshold * 100}%` }} />
+                <div className={`${styles.meterFill} ${liveVoiceRatio >= voiceRatioThreshold ? styles.meterActive : ''}`} style={{ width: `${Math.min(liveVoiceRatio * 100, 100)}%` }} />
+              </div>
+              <div className={styles.meterLabels}><span>0</span><span>임계 {voiceRatioThreshold.toFixed(2)}</span><span>1</span></div>
+            </div>
+            <div className={styles.debugSection}>
+              <p className={styles.debugSectionTitle}>임계값 조정</p>
+              <label className={styles.debugField}>
+                <span>SNR 배수 (감도)</span>
+                <input type="range" step="0.1" min="0.1" max="5.0" value={snrMultiplier} onChange={(e) => setSnrMultiplier(parseFloat(e.target.value))} className={styles.debugSlider} />
+                <span className={styles.debugValue}>{snrMultiplier.toFixed(1)}×</span>
+              </label>
+              <label className={styles.debugField}>
+                <span>노이즈 게이트 (voiceRatio)</span>
+                <input type="range" step="0.01" min="0.00" max="0.99" value={voiceRatioThreshold} onChange={(e) => setVoiceRatioThreshold(parseFloat(e.target.value))} className={styles.debugSlider} />
+                <span className={styles.debugValue}>{voiceRatioThreshold.toFixed(2)}</span>
+              </label>
+            </div>
+            <button className={styles.debugReset} onClick={() => { setSnrMultiplier(DEFAULT_SNR_MULTIPLIER); setVoiceRatioThreshold(0.30); }}>
+              기본값으로 초기화
+            </button>
+          </div>
+        )}
+
+      {/* ── SETUP: VAD 설정 + 색상 선택 (전체 화면 오버레이) ── */}
       {phase === 'setup' && (
         <div className={styles.setupOverlay}>
           <div className={styles.setupPanel}>
@@ -439,175 +558,6 @@ export default function VisualizerPage() {
         </div>
       )}
 
-      {/* ── RECORDING: 캡처 버튼 ── */}
-      {phase === 'recording' && (
-        <div className={styles.recordingUi}>
-          <p className={styles.recordHint}>
-            {isOverThreshold ? '목소리를 분석하고 있어요' : '말을 해보세요'}
-          </p>
-          <button className={styles.captureButton} onClick={handleCapture}>
-            캡처
-          </button>
-        </div>
-      )}
-
-      {/* ── PREVIEW: 캡처 확인 + 저장/전송 ── */}
-      {phase === 'preview' && (
-        <div className={styles.previewOverlay}>
-          <p className={styles.previewHint}>길게 눌러 이미지 저장</p>
-          <div className={styles.previewActions}>
-            <button className={styles.previewBtn} onClick={handleRetry}>
-              다시 녹음
-            </button>
-            <button className={`${styles.previewBtn} ${styles.previewBtnPrimary}`} onClick={handleSendToAI}>
-              AI로 보내기
-            </button>
-          </div>
-          {sendError && <p className={styles.errorMsg}>{sendError}</p>}
-        </div>
-      )}
-
-      {/* ── SENDING ── */}
-      {phase === 'sending' && (
-        <div className={styles.sendingOverlay}>
-          <div className={styles.sendingSpinner} />
-          <p>AI에게 전달 중...</p>
-        </div>
-      )}
-
-      {/* ── ERROR ── */}
-      {phase === 'error' && (
-        <div className={styles.overlay}>
-          <button className={styles.micButton} onClick={enterSetup}>
-            <MicIcon />
-          </button>
-          <p className={styles.idleHint}>다시 시도하기</p>
-          {sendError && <p className={styles.errorMsg}>{sendError}</p>}
-        </div>
-      )}
-
-      {/* ── 디버그 패널 (우상단 5회 탭으로 열기) ── */}
-      {debugOpen && (
-        <div className={styles.debugPanel}>
-          <div className={styles.debugHeader}>
-            <span>VAD 디버그</span>
-            <button className={styles.debugClose} onClick={() => setDebugOpen(false)}>✕</button>
-          </div>
-
-          {/* ── 감지 주파수 범위 ── */}
-          <div className={styles.debugSection}>
-            <p className={styles.debugSectionTitle}>감지 주파수 범위</p>
-            {audioInfo ? (
-              <div className={styles.debugInfoGrid}>
-                <span className={styles.debugInfoLabel}>대역 통과 필터</span>
-                <span className={styles.debugInfoValue}>{audioInfo.filterMin} Hz ~ {audioInfo.filterMax.toLocaleString()} Hz</span>
-                <span className={styles.debugInfoLabel}>FFT 크기</span>
-                <span className={styles.debugInfoValue}>{audioInfo.fftSize.toLocaleString()} 포인트 ({audioInfo.binCount.toLocaleString()} 빈)</span>
-                <span className={styles.debugInfoLabel}>빈 해상도</span>
-                <span className={styles.debugInfoValue}>~{audioInfo.binWidth.toFixed(1)} Hz/빈</span>
-                <span className={styles.debugInfoLabel}>샘플레이트</span>
-                <span className={styles.debugInfoValue}>{(audioInfo.sampleRate / 1000).toFixed(1)} kHz</span>
-                <span className={styles.debugInfoLabel}>스무딩</span>
-                <span className={styles.debugInfoValue}>{audioInfo.smoothing}</span>
-              </div>
-            ) : (
-              <span className={styles.debugInfoValue}>마이크 연결 대기 중...</span>
-            )}
-          </div>
-
-          {/* ── 노이즈 제거 레이어 ── */}
-          <div className={styles.debugSection}>
-            <p className={styles.debugSectionTitle}>노이즈 제거 레이어</p>
-            <div className={styles.debugInfoGrid}>
-              <span className={styles.debugInfoLabel}>L1 브라우저</span>
-              <span className={styles.debugInfoValue}>noiseSuppression + echoCancellation</span>
-              <span className={styles.debugInfoLabel}>L2 Web Audio</span>
-              <span className={styles.debugInfoValue}>BPF 80 ~ 4,000 Hz (Q=0.7)</span>
-              <span className={styles.debugInfoLabel}>L3 voiceRatio</span>
-              <span className={styles.debugInfoValue}>음성 대역(85~3,500 Hz) 에너지 비율</span>
-            </div>
-          </div>
-
-          {/* ── SNR 미터 ── */}
-          <div className={styles.debugSection}>
-            <div className={styles.debugLabel}>
-              볼륨 / SNR
-              <span className={styles.debugValue}>{liveVolume.toFixed(3)} / {liveSNR.toFixed(1)}×</span>
-              <span className={`${styles.debugBadge} ${isOverThreshold ? styles.speaking : styles.silent}`}>
-                {isOverThreshold ? '발화 중' : '침묵'}
-              </span>
-            </div>
-            <div className={styles.meterTrack}>
-              <div className={styles.meterNoiseLine} style={{ left: `${Math.min(noiseFloor * 100, 99)}%` }} />
-              <div className={styles.meterThreshold} style={{ left: `${Math.min(noiseFloor * snrMultiplier * 100, 99)}%` }} />
-              <div
-                className={`${styles.meterFill} ${isOverThreshold ? styles.meterActive : ''}`}
-                style={{ width: `${Math.min(liveVolume * 100, 100)}%` }}
-              />
-            </div>
-            <div className={styles.meterLabels}>
-              <span>0</span>
-              <span>노이즈 {noiseFloor.toFixed(3)}</span>
-              <span>1</span>
-            </div>
-          </div>
-
-          {/* ── voiceRatio 미터 ── */}
-          <div className={styles.debugSection}>
-            <div className={styles.debugLabel}>
-              voiceRatio (L3 노이즈 게이트)
-              <span className={styles.debugValue}>{liveVoiceRatio.toFixed(3)}</span>
-              <span className={`${styles.debugBadge} ${liveVoiceRatio >= voiceRatioThreshold ? styles.speaking : styles.silent}`}>
-                {liveVoiceRatio >= voiceRatioThreshold ? '목소리' : '노이즈'}
-              </span>
-            </div>
-            <div className={styles.meterTrack}>
-              <div className={styles.meterThreshold} style={{ left: `${voiceRatioThreshold * 100}%` }} />
-              <div
-                className={`${styles.meterFill} ${liveVoiceRatio >= voiceRatioThreshold ? styles.meterActive : ''}`}
-                style={{ width: `${Math.min(liveVoiceRatio * 100, 100)}%` }}
-              />
-            </div>
-            <div className={styles.meterLabels}>
-              <span>0</span>
-              <span>임계 {voiceRatioThreshold.toFixed(2)}</span>
-              <span>1</span>
-            </div>
-          </div>
-
-          {/* ── 임계값 조정 ── */}
-          <div className={styles.debugSection}>
-            <p className={styles.debugSectionTitle}>임계값 조정</p>
-            <label className={styles.debugField}>
-              <span>SNR 배수 (감도)</span>
-              <input
-                type="range" step="0.1" min="0.1" max="5.0"
-                value={snrMultiplier}
-                onChange={(e) => setSnrMultiplier(parseFloat(e.target.value))}
-                className={styles.debugSlider}
-              />
-              <span className={styles.debugValue}>{snrMultiplier.toFixed(1)}×</span>
-            </label>
-            <label className={styles.debugField}>
-              <span>노이즈 게이트 (voiceRatio)</span>
-              <input
-                type="range" step="0.01" min="0.00" max="0.99"
-                value={voiceRatioThreshold}
-                onChange={(e) => setVoiceRatioThreshold(parseFloat(e.target.value))}
-                className={styles.debugSlider}
-              />
-              <span className={styles.debugValue}>{voiceRatioThreshold.toFixed(2)}</span>
-            </label>
-          </div>
-
-          <button
-            className={styles.debugReset}
-            onClick={() => { setSnrMultiplier(DEFAULT_SNR_MULTIPLIER); setVoiceRatioThreshold(0.30); }}
-          >
-            기본값으로 초기화
-          </button>
-        </div>
-      )}
     </div>
   );
 }

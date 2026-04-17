@@ -153,9 +153,10 @@ export function stepParticlesScatter(particles, targets) {
 export function renderParticles(imageData, particles, width, height, rgb, bw = false) {
   const data = imageData.data;
 
-  // 배경 검정으로 초기화
+  // bw(캡처): 검정 불투명 배경 / 라이브: 투명 배경(CSS gradient가 뒤에서 보임)
+  const bgAlpha = bw ? 255 : 0;
   for (let i = 0; i < data.length; i += 4) {
-    data[i] = 0; data[i + 1] = 0; data[i + 2] = 0; data[i + 3] = 255;
+    data[i] = 0; data[i + 1] = 0; data[i + 2] = 0; data[i + 3] = bgAlpha;
   }
 
   const base = bw ? [255, 255, 255] : (rgb ?? [255, 255, 255]);
@@ -179,6 +180,7 @@ export function renderParticles(imageData, particles, width, height, rgb, bw = f
         data[idx]     = Math.min(255, data[idx]     + pr);
         data[idx + 1] = Math.min(255, data[idx + 1] + pg);
         data[idx + 2] = Math.min(255, data[idx + 2] + pb);
+        data[idx + 3] = 255; // 파티클 픽셀은 항상 불투명
       }
     }
   }

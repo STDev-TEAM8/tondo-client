@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CosmicBg } from '../components/CosmicBg';
 import { CosmicBgLogin } from '../components/CosmicBgLogin';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +6,9 @@ import { signup } from '../api/artworkApi';
 import styles from './LandingPage.module.css';
 
 const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
+
+// 나중에 이미지 추가 시 여기에 경로만 추가
+const SLIDES = ['/ref1.jpg', '/ref2.jpg'];
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -17,6 +20,33 @@ export default function LandingPage() {
   const [pin, setPin]   = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(null);
+
+  // 캐러셀
+  const [slideIdx, setSlideIdx] = useState(0);
+  const carouselDragRef = useRef({ x: 0, y: 0 });
+
+  // 이미지 2장 이상일 때 자동 슬라이드
+  useEffect(() => {
+    if (SLIDES.length <= 1) return;
+    const t = setInterval(() => setSlideIdx(i => (i + 1) % SLIDES.length), 3500);
+    return () => clearInterval(t);
+  }, []);
+
+  const onCarouselTouchStart = (e) => {
+    carouselDragRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+  const onCarouselTouchMove = (e) => {
+    const dx = Math.abs(e.touches[0].clientX - carouselDragRef.current.x);
+    const dy = Math.abs(e.touches[0].clientY - carouselDragRef.current.y);
+    if (dx > dy * 1.5) e.stopPropagation(); // 가로 스와이프 → 섹션 스크롤 차단
+  };
+  const onCarouselTouchEnd = (e) => {
+    const dx = carouselDragRef.current.x - e.changedTouches[0].clientX;
+    const dy = Math.abs(carouselDragRef.current.y - e.changedTouches[0].clientY);
+    if (Math.abs(dx) > 40 && Math.abs(dx) > dy * 1.5) {
+      setSlideIdx(i => dx > 0 ? (i + 1) % SLIDES.length : (i - 1 + SLIDES.length) % SLIDES.length);
+    }
+  };
 
   const canStart = name.trim().length > 0 && pin.length === 4;
 
@@ -137,53 +167,84 @@ export default function LandingPage() {
       >
         <CosmicBgLogin />
 
-        {/* 왼쪽: 비주얼 */}
+        {/* 왼쪽: 핸드폰 모형 + 카드 뉴스 스와이프 캐러셀 */}
         <div className={styles.section2Left}>
-          <img src="/ref2.jpg" alt="" className={styles.section2LeftImg} />
+          <div className={styles.phoneMock}>
+            <div className={styles.phoneScreen}>
+              <div
+                className={styles.carousel}
+                onTouchStart={onCarouselTouchStart}
+                onTouchMove={onCarouselTouchMove}
+                onTouchEnd={onCarouselTouchEnd}
+              >
+                <div
+                  className={styles.carouselTrack}
+                  style={{ transform: `translateX(-${slideIdx * 100}%)` }}
+                >
+                  {SLIDES.map((src, i) => (
+                    <img key={i} src={src} alt="" className={styles.carouselImg} draggable={false} />
+                  ))}
+                </div>
+                {SLIDES.length > 1 && (
+                  <div className={styles.carouselDots}>
+                    {SLIDES.map((_, i) => (
+                      <button
+                        key={i}
+                        className={`${styles.carouselDot} ${i === slideIdx ? styles.carouselDotActive : ''}`}
+                        onClick={() => setSlideIdx(i)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* 오른쪽: 폼 */}
         <div className={styles.section2Right}>
-          <p className={styles.formTitle}>체험 등록</p>
+          <div className={styles.loginBox}>
+            <p className={styles.formTitle}>체험 등록</p>
 
-          <div className={styles.formGroup}>
-            <input
-              className={styles.input}
-              type="text"
-              placeholder="이름"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={20}
-            />
-            <input
-              className={styles.input}
-              type="password"
-              inputMode="numeric"
-              placeholder="비밀번호 4자리"
-              value={pin}
-              onChange={handlePinChange}
-              maxLength={4}
-            />
-          </div>
+            <div className={styles.formGroup}>
+              <input
+                className={styles.input}
+                type="text"
+                placeholder="이름"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={20}
+              />
+              <input
+                className={styles.input}
+                type="password"
+                inputMode="numeric"
+                placeholder="비밀번호 4자리"
+                value={pin}
+                onChange={handlePinChange}
+                maxLength={4}
+              />
+            </div>
 
-          <div
-            className={styles.btnWrap}
-            style={{
-              opacity: canStart ? 1 : 0,
-              transform: canStart ? 'translateY(0)' : 'translateY(14px)',
-              pointerEvents: canStart ? 'auto' : 'none',
-            }}
-          >
-            <button
-              className={styles.startButton}
-              onClick={handleStart}
-              disabled={loading || !canStart}
+            <div
+              className={styles.btnWrap}
+              style={{
+                opacity: canStart ? 1 : 0,
+                transform: canStart ? 'translateY(0)' : 'translateY(14px)',
+                pointerEvents: canStart ? 'auto' : 'none',
+              }}
             >
-              {loading ? '확인 중...' : '체험 시작하기'}
-            </button>
-          </div>
+              <button
+                className={styles.startButton}
+                onClick={handleStart}
+                disabled={loading || !canStart}
+              >
+                {loading ? '확인 중...' : '체험 시작하기'}
+              </button>
+            </div>
 
-          {error && <p className={styles.error}>{error}</p>}
+            {error && <p className={styles.error}>{error}</p>}
+          </div>
         </div>
       </div>
 
