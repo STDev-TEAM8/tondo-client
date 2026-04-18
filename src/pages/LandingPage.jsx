@@ -21,7 +21,7 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(null);
 
-  // 캐러셀 (현재 JSX에서 미사용 — 향후 활성화 예정)
+  // 캐러셀 (미사용 — JSX 활성화 시 주석 해제)
   // const [slideIdx, setSlideIdx] = useState(0);
   // const carouselDragRef = useRef({ x: 0, y: 0 });
 
