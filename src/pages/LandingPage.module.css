@@ -256,7 +256,10 @@
 
 /* ── iPad Pro 목업 (앞 레이어) ── */
 .ipadMock {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 3;
   width: min(420px, 92%);
   display: flex;
@@ -264,6 +267,8 @@
   align-items: center;
   filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.45));
   flex-shrink: 0;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s ease;
+  will-change: transform, opacity;
 }
 
 .ipadScreenWrap {
@@ -322,8 +327,8 @@
   align-items: center;
   justify-content: center;
   transform: translate(-50%, -50%);
-  transition: transform 1s ease;
-  will-change: transform;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s ease;
+  will-change: transform, opacity;
 }
 
 .watchMockPushed {
@@ -386,8 +391,8 @@
   align-items: center;
   justify-content: center;
   transform: translate(-50%, -50%);
-  transition: transform 1s ease;
-  will-change: transform;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s ease;
+  will-change: transform, opacity;
   overflow: hidden;
 }
 

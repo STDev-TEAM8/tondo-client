@@ -7,8 +7,6 @@ import phoneImage from '../assets/img.png';
 import ipadImage from '../assets/ex2.png';
 import styles from './LandingPage.module.css';
 
-const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
-
 // 나중에 이미지 추가 시 여기에 경로만 추가
 const SLIDES = ['/ref1.jpg', '/ref2.jpg'];
 
@@ -26,6 +24,13 @@ export default function LandingPage() {
   // 캐러셀
   const [slideIdx, setSlideIdx] = useState(0);
   const carouselDragRef = useRef({ x: 0, y: 0 });
+
+  // 디바이스 자동 순환 — 좌→중→우 (0=iPad, 1=watch, 2=iPhone)
+  const [activeDevice, setActiveDevice] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setActiveDevice(i => (i + 1) % 3), 3500);
+    return () => clearInterval(t);
+  }, []);
 
   // 마이크 — 두 섹션의 파동을 사용자의 목소리로 살리는 인터랙티브
   const [micEnabled, setMicEnabled] = useState(false);
@@ -121,10 +126,17 @@ export default function LandingPage() {
   // 폼이 활성화되면 pageTrack을 scroller 위로 올려서 입력 가능하게 함
   // 동시에 section2에서 휠/터치 이벤트를 포워딩해 위로 되돌아가기 지원
   const formActive = progress >= 0.95;
-  // 슬라이드 + 페이드를 하나의 값으로 묶어 완전히 동시에 진행
-  const phoneReveal = clamp((progress - 0.1) / 0.55, 0, 1);
-  // 맥북 뒤 레이어의 워치/아이폰 밀어내기 — 스크롤이 진행되면 좌우로 빠져나간다
-  const pushOut = progress >= 0.5;
+  // 디바이스 포지션 헬퍼: (D-A+3)%3 → 0=center, 1=left, 2=right (좌→우 순환)
+  const deviceStyle = (idx, centerScale = 1) => {
+    const p = (idx - activeDevice + 3) % 3;
+    const pos = p === 0 ? 'center' : p === 1 ? 'left' : 'right';
+    const extra = activeDevice === 0 ? 50 : 0; // iPad 중앙일 때 좌우 21px 더 벌림
+    const transform =
+      pos === 'center' ? `translate(-50%, -50%) scale(${centerScale})` :
+      pos === 'left'   ? `translate(calc(-50% - ${165 + extra}px), -50%) scale(0.6)` :
+                         `translate(calc(-50% + ${195 + extra}px), -50%) scale(0.6)`;
+    return { transform, opacity: pos === 'center' ? 1 : 0.5, zIndex: pos === 'center' ? 3 : 1 };
+  };
 
   return (
     <div className={styles.outer}>
@@ -193,10 +205,8 @@ export default function LandingPage() {
           </div>
           */}
 
-          {/* ── 뒤 레이어: Apple Watch SE2 (왼쪽으로 밀어내기) ── */}
-          <div
-            className={`${styles.watchMock} ${pushOut ? styles.watchMockPushed : ''}`}
-          >
+          {/* ── Apple Watch SE2 ── */}
+          <div className={styles.watchMock} style={deviceStyle(1, 2.1)}>
             <div className={styles.watchScreen}>
               <img className={styles.watchScreenImage} src={phoneImage} alt="watch content" />
             </div>
@@ -204,10 +214,8 @@ export default function LandingPage() {
             <div className={styles.watchSideButton} />
           </div>
 
-          {/* ── 뒤 레이어: iPhone 16 (오른쪽으로 밀어내기) ── */}
-          <div
-            className={`${styles.iphoneSideMock} ${pushOut ? styles.iphoneSideMockPushed : ''}`}
-          >
+          {/* ── iPhone 16 ── */}
+          <div className={styles.iphoneSideMock} style={deviceStyle(2, 1.7)}>
             <div className={styles.iphoneSideScreen}>
               <div className={styles.screenGlass}>
                 <img className={styles.iphoneSideScreenImage} src={phoneImage} alt="iphone content" />
@@ -216,26 +224,27 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* ── 앞 레이어: iPad Pro 목업 ── */}
-          <div className={styles.ipadMock}>
+          {/* ── iPad Pro ── */}
+          <div className={styles.ipadMock} style={deviceStyle(0, 1)}>
             <div className={styles.ipadScreenWrap}>
               <div className={styles.ipadNotch} />
               <div className={styles.ipadScreen}>
                 <img className={styles.ipadScreenImage} src={ipadImage} alt="ipad content" />
               </div>
             </div>
-          )}
+          </div>
 
-          {deviceType === 'laptop' && (
-            <div className={styles.laptopMock}>
-              <div className={styles.laptopScreen}>{carousel}</div>
-              <div className={styles.laptopBase} />
-            </div>
-          )}
+          {/* ── 디바이스 피커 (주석 처리) ──
+          <div className={styles.devicePicker} style={{ marginTop: '-11px' }}>...</div>
+          {deviceType === 'phone' && <div className={styles.phoneMock}>...</div>}
+          {deviceType === 'watch' && <div className={styles.watchWrapper}>...</div>}
+          {deviceType === 'laptop' && <div className={styles.laptopMock}>...</div>}
+          */}
         </div>
 
         <div className={styles.section2Right}>
           <div className={styles.loginBox}>
+            <p className={styles.formTitle}>체험 등록</p>
             <div className={styles.formGroup}>
               <input
                 className={styles.input}
