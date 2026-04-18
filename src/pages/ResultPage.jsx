@@ -127,12 +127,33 @@ export default function ResultPage() {
             크롭 중...
           </div>
         ) : croppedUrl ? (
-          <img
-            src={croppedUrl}
-            alt="생성된 미디어 아트"
-            className={styles.resultImage}
-            onContextMenu={(e) => e.preventDefault()}
-          />
+          <>
+            {selectedCrop === 'phone' && (
+              <div className={styles.phoneMock}>
+                <div className={styles.phoneScreen}>
+                  <img src={croppedUrl} alt="생성된 미디어 아트" className={styles.resultImage} onContextMenu={(e) => e.preventDefault()} />
+                </div>
+              </div>
+            )}
+            {selectedCrop === 'watch' && (
+              <div className={styles.watchWrapper}>
+                <div className={styles.watchMock}>
+                  <div className={styles.watchCrown} />
+                  <div className={styles.watchScreen}>
+                    <img src={croppedUrl} alt="생성된 미디어 아트" className={styles.resultImage} onContextMenu={(e) => e.preventDefault()} />
+                  </div>
+                </div>
+              </div>
+            )}
+            {selectedCrop === 'laptop' && (
+              <div className={styles.laptopMock}>
+                <div className={styles.laptopScreen}>
+                  <img src={croppedUrl} alt="생성된 미디어 아트" className={styles.resultImage} onContextMenu={(e) => e.preventDefault()} />
+                </div>
+                <div className={styles.laptopBase} />
+              </div>
+            )}
+          </>
         ) : null}
       </section>
 
