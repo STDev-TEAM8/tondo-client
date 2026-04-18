@@ -1,19 +1,24 @@
 # tondo-client
-STDev 8 Team : Client-side code repository
 
-# React + Vite
+STDev 8 Team frontend repository built with React and Vite.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Scripts
 
-Currently, two official plugins are available:
+- `npm run dev`: start local Vite dev server
+- `npm run lint`: run ESLint
+- `npm run build`: create production build
+- `npm run preview`: preview the built app locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Deployment
 
-## React Compiler
+- Hosting: Vercel
+- Production API env: `VITE_API_BASE_URL`
+- SPA routing: handled by `vercel.json` rewrite for `BrowserRouter`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+See deployment details in [docs/vercel-deployment-guide.md](./docs/vercel-deployment-guide.md).
 
-## Expanding the ESLint configuration
+## CI/CD
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+GitHub Actions validates pull requests and pushes to `main` with lint and build checks. Vercel is expected to handle preview and production deployments after the GitHub repository is connected to the `tondo-client` project.
+
+See CI/CD setup notes in [docs/frontend-cicd.md](./docs/frontend-cicd.md).
