@@ -21,9 +21,9 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(null);
 
-  // 캐러셀
-  const [slideIdx, setSlideIdx] = useState(0);
-  const carouselDragRef = useRef({ x: 0, y: 0 });
+  // 캐러셀 (현재 JSX에서 미사용 — 향후 활성화 예정)
+  // const [slideIdx, setSlideIdx] = useState(0);
+  // const carouselDragRef = useRef({ x: 0, y: 0 });
 
   // 디바이스 자동 순환 — 좌→중→우 (0=iPad, 1=watch, 2=iPhone)
   const [activeDevice, setActiveDevice] = useState(0);
@@ -36,28 +36,28 @@ export default function LandingPage() {
   const [micEnabled, setMicEnabled] = useState(false);
   const micRef = useMicLevel(micEnabled);
 
-  // 이미지 2장 이상일 때 자동 슬라이드
-  useEffect(() => {
-    if (SLIDES.length <= 1) return;
-    const t = setInterval(() => setSlideIdx(i => (i + 1) % SLIDES.length), 3500);
-    return () => clearInterval(t);
-  }, []);
+  // // 이미지 2장 이상일 때 자동 슬라이드
+  // useEffect(() => {
+  //   if (SLIDES.length <= 1) return;
+  //   const t = setInterval(() => setSlideIdx(i => (i + 1) % SLIDES.length), 3500);
+  //   return () => clearInterval(t);
+  // }, []);
 
-  const onCarouselTouchStart = (e) => {
-    carouselDragRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  };
-  const onCarouselTouchMove = (e) => {
-    const dx = Math.abs(e.touches[0].clientX - carouselDragRef.current.x);
-    const dy = Math.abs(e.touches[0].clientY - carouselDragRef.current.y);
-    if (dx > dy * 1.5) e.stopPropagation(); // 가로 스와이프 → 섹션 스크롤 차단
-  };
-  const onCarouselTouchEnd = (e) => {
-    const dx = carouselDragRef.current.x - e.changedTouches[0].clientX;
-    const dy = Math.abs(carouselDragRef.current.y - e.changedTouches[0].clientY);
-    if (Math.abs(dx) > 40 && Math.abs(dx) > dy * 1.5) {
-      setSlideIdx(i => dx > 0 ? (i + 1) % SLIDES.length : (i - 1 + SLIDES.length) % SLIDES.length);
-    }
-  };
+  // const onCarouselTouchStart = (e) => {
+  //   carouselDragRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  // };
+  // const onCarouselTouchMove = (e) => {
+  //   const dx = Math.abs(e.touches[0].clientX - carouselDragRef.current.x);
+  //   const dy = Math.abs(e.touches[0].clientY - carouselDragRef.current.y);
+  //   if (dx > dy * 1.5) e.stopPropagation();
+  // };
+  // const onCarouselTouchEnd = (e) => {
+  //   const dx = carouselDragRef.current.x - e.changedTouches[0].clientX;
+  //   const dy = Math.abs(carouselDragRef.current.y - e.changedTouches[0].clientY);
+  //   if (Math.abs(dx) > 40 && Math.abs(dx) > dy * 1.5) {
+  //     setSlideIdx(i => dx > 0 ? (i + 1) % SLIDES.length : (i - 1 + SLIDES.length) % SLIDES.length);
+  //   }
+  // };
 
   const canStart = name.trim().length > 0 && pin.length === 4;
 

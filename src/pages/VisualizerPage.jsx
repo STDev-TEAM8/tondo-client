@@ -81,7 +81,7 @@ export default function VisualizerPage() {
   // ── 오디오 & 클라드니 EMA ─────────────────────────────────────────────────────
   const { features, isReady, error: micError, audioInfo, start, stop } = useAudioAnalyzer();
   const { update: updateChladni, reset: resetChladni } = useChladniParams();
-  const { update: vadUpdate, reset: resetVAD, noiseFloor } = useAdaptiveVAD();
+  const { update: vadUpdate, noiseFloor } = useAdaptiveVAD();
 
   // ── 캔버스 초기화 (리사이즈 포함) ─────────────────────────────────────────────
   useEffect(() => {

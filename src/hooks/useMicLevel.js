@@ -62,7 +62,7 @@ export function useMicLevel(enabled) {
           rafId = requestAnimationFrame(tick);
         };
         tick();
-      } catch (e) {
+      } catch {
         // Permission denied or device error — silently ignore, level stays 0
       }
     })();
@@ -72,9 +72,10 @@ export function useMicLevel(enabled) {
       if (rafId) cancelAnimationFrame(rafId);
       if (stream) stream.getTracks().forEach((t) => t.stop());
       if (audioCtx) audioCtx.close().catch(() => {});
-      dataRef.current.level = 0;
-      dataRef.current.freq = null;
-      dataRef.current.time = null;
+      const d = dataRef.current;
+      d.level = 0;
+      d.freq = null;
+      d.time = null;
     };
   }, [enabled]);
 
