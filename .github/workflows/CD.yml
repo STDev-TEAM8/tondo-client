@@ -1,0 +1,52 @@
+name: Frontend CD
+
+on:
+  workflow_run:
+    workflows:
+      - Frontend CI
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-production:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: team_0BnzV7WrYBWVnkDt0DnRWVQJ
+          VERCEL_PROJECT_ID: prj_DvHpVOyD3L0aXhJY5z90TdPZHXTf
+
+      - name: Build project artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: team_0BnzV7WrYBWVnkDt0DnRWVQJ
+          VERCEL_PROJECT_ID: prj_DvHpVOyD3L0aXhJY5z90TdPZHXTf
+
+      - name: Deploy to Vercel production
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: team_0BnzV7WrYBWVnkDt0DnRWVQJ
+          VERCEL_PROJECT_ID: prj_DvHpVOyD3L0aXhJY5z90TdPZHXTf
