@@ -24,10 +24,12 @@ const LAYERS = [
 // 파도 크레스트에 얇은 하이라이트 선 (수면 반사 느낌)
 const CREST_COLOR = 'rgba(80, 140, 200, 0.12)';
 
+const INITIAL_TIMES = LAYERS.map(() => ({ t1: Math.random() * Math.PI * 2, t2: Math.random() * Math.PI * 2 }));
+
 export function OceanWaves() {
   const canvasRef = useRef(null);
   const rafRef    = useRef(null);
-  const timeRef   = useRef(LAYERS.map(() => ({ t1: Math.random() * Math.PI * 2, t2: Math.random() * Math.PI * 2 })));
+  const timeRef   = useRef(INITIAL_TIMES);
   const sizeRef   = useRef({ w: 0, h: 0 });
 
   useEffect(() => {

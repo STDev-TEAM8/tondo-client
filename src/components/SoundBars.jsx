@@ -30,20 +30,19 @@ function envelope(i, total) {
   return 0.15 + 0.85 * Math.exp(-x * x * 2.8);
 }
 
+const INITIAL_BARS = Array.from({ length: BAR_COUNT }, (_, i) => ({
+  phase:     Math.random() * Math.PI * 2,
+  speed:     0.018 + Math.random() * 0.022,
+  env:       envelope(i, BAR_COUNT),
+  colorStop: i / (BAR_COUNT - 1),
+}));
+
 export function SoundBars() {
   const canvasRef = useRef(null);
   const rafRef    = useRef(null);
   const sizeRef   = useRef({ w: 0, h: 0 });
 
-  // 각 막대의 개별 애니메이션 파라미터 (마운트 시 1회 생성)
-  const barsRef = useRef(
-    Array.from({ length: BAR_COUNT }, (_, i) => ({
-      phase:     Math.random() * Math.PI * 2,
-      speed:     0.018 + Math.random() * 0.022,
-      env:       envelope(i, BAR_COUNT),
-      colorStop: i / (BAR_COUNT - 1),
-    }))
-  );
+  const barsRef = useRef(INITIAL_BARS);
 
   useEffect(() => {
     const canvas = canvasRef.current;

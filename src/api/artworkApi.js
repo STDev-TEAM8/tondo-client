@@ -127,7 +127,7 @@ async function mockRequestArtwork({ uuid, avgPitch, avgVolume, avgTimbre, voiceC
   return { taskId: `mock_${Date.now()}` };
 }
 
-async function mockFetchResult(_taskId) {
+async function mockFetchResult() {
   await delay(400);
   return {
     imageUrl: null,       // 실제 서버 연동 전까지 null

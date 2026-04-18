@@ -22,6 +22,7 @@ export function useAnimatedProgress(rawPercent) {
     // 실제 진행률이 현재 표시값보다 크면 즉시 스냅
     if (rawPercent > displayRef.current) {
       displayRef.current = rawPercent;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplayPercent(rawPercent);
     }
 
