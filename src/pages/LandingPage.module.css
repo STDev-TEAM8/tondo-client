@@ -378,11 +378,11 @@
   z-index: 1;
   top: 50%;
   left: 50%;
-  width: min(180px, 30%);
+  width: min(130px, 22%);
   aspect-ratio: 9 / 19.5;
   background: #050506;
   border: 1.5px solid #141416;
-  border-radius: 32px;
+  border-radius: 16% / 7.5%;
   box-shadow:
     0 0 0 1.5px #2d2d32,
     0 22px 50px rgba(0, 0, 0, 0.6),
@@ -403,7 +403,7 @@
 .iphoneSideScreen {
   position: absolute;
   inset: 5px;
-  border-radius: 26px;
+  border-radius: 14% / 6.5%;
   overflow: hidden;
   background: #050608;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
@@ -424,7 +424,7 @@
   transform: translateX(-50%);
   width: 38%;
   max-width: 70px;
-  height: 18px;
+  height: 10px;
   background: #000;
   border-radius: 999px;
   box-shadow:
@@ -645,6 +645,7 @@
     order: 1;
     flex: none;
     width: 100%;
+    height: clamp(240px, 75vw, 360px);
   }
 
   .section2Right {
