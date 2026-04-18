@@ -43,8 +43,10 @@
   /* 캔버스 크기는 JS가 결정 — CSS는 controls 높이만 뺀 최대치 제한 */
   max-width: min(100vw, calc(100vh - 112px));
   max-height: calc(100vh - 112px);
-  /* 캔버스 배경: 투명 픽셀에 컨테이너 그라디언트가 비침 */
-  background: linear-gradient(180deg, #1E2E4A 0%, #334155 70%, #64748B 100%);
+  /* 캔버스 배경: 옅은 회색 */
+  background: #2f3746;
+  /* 캔버스 뒤 옅은 그림자 */
+  box-shadow: 0 0 60px 20px rgba(0, 0, 0, 0.55);
   /* 파티클 밀집 영역이 빛나는 glow 효과 */
   filter: blur(1px) brightness(1.25) contrast(1.1);
 }

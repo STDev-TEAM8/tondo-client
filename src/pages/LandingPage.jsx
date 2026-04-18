@@ -224,7 +224,14 @@ export default function LandingPage() {
                 <img className={styles.ipadScreenImage} src={ipadImage} alt="ipad content" />
               </div>
             </div>
-          </div>
+          )}
+
+          {deviceType === 'laptop' && (
+            <div className={styles.laptopMock}>
+              <div className={styles.laptopScreen}>{carousel}</div>
+              <div className={styles.laptopBase} />
+            </div>
+          )}
         </div>
 
         <div className={styles.section2Right}>
