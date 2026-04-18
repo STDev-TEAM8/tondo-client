@@ -20,7 +20,7 @@ import styles from './VisualizerPage.module.css';
 
 initColors(ORIGINAL_COLORS);
 
-const DEFAULT_SNR_MULTIPLIER = 0.5;  // 노이즈 플로어 대비 배수
+const DEFAULT_SNR_MULTIPLIER = 2.55;  // 노이즈 플로어 대비 배수
 const PARTICLE_COUNT         = 40000;
 const REBUILD_DELTA     = 0.04;
 const SILENCE_HOLD_MS   = 1200; // 침묵 후 흩어지기 전 유예 시간 (ms)
@@ -59,7 +59,7 @@ export default function VisualizerPage() {
   const [phase, setPhase] = useState('setup');
   // 'idle' | 'setup' | 'recording' | 'preview' | 'sending' | 'error'
   const [snrMultiplier, setSnrMultiplier]             = useState(DEFAULT_SNR_MULTIPLIER);
-  const [voiceRatioThreshold, setVoiceRatioThreshold] = useState(0.30);
+  const [voiceRatioThreshold, setVoiceRatioThreshold] = useState(0.495);
   const [liveVolume, setLiveVolume]                   = useState(0);
   const [liveVoiceRatio, setLiveVoiceRatio]           = useState(0);
   const [selectedColor, setSelectedColor]             = useState(COLOR_PALETTE[0]);
