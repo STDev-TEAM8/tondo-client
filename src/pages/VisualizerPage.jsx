@@ -15,6 +15,7 @@ import {
 import { canvasToBase64 } from '../utils/imageUtils';
 import { requestArtwork, getOrCreateUUID } from '../api/artworkApi';
 import { hslToHex, calculateFinalColor } from '../utils/chladniMath';
+import ntc from 'ntc-ts';
 import styles from './VisualizerPage.module.css';
 
 const DEFAULT_SNR_MULTIPLIER = 0.5;  // 노이즈 플로어 대비 배수
@@ -183,9 +184,10 @@ export default function VisualizerPage() {
     const { avgPitch, avgVolume, avgTimbre } = computeAverageFeatures(featureHistoryRef.current);
     const uuid = getOrCreateUUID();
 
-    // ── 목소리 색상Hex 추출 ──
+    // ── 목소리 색상 → 자연어 이름 변환 ──
     const finalHsl = calculateFinalColor(avgPitch, selectedColor?.hue);
-    const voiceColor = hslToHex(finalHsl);
+    const voiceColorHex = hslToHex(finalHsl);
+    const voiceColor = ntc.name(voiceColorHex).name;
 
     setPhase('sending');
     setSendError(null);
