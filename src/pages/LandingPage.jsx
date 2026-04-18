@@ -3,8 +3,9 @@ import { VoiceWaveBg } from '../components/VoiceWaveBg';
 import { useMicLevel } from '../hooks/useMicLevel';
 import { useNavigate } from 'react-router-dom';
 import { signup } from '../api/artworkApi';
-import phoneImage from '../assets/img.png';
-import ipadImage from '../assets/ex2.png';
+import phoneImage from '../assets/phone.png';
+import ipadImage from '../assets/pad.png';
+import watchImage from '../assets/watch.png';
 import styles from './LandingPage.module.css';
 
 // 나중에 이미지 추가 시 여기에 경로만 추가
@@ -208,7 +209,7 @@ export default function LandingPage() {
           {/* ── Apple Watch SE2 ── */}
           <div className={styles.watchMock} style={deviceStyle(1, 2.1)}>
             <div className={styles.watchScreen}>
-              <img className={styles.watchScreenImage} src={phoneImage} alt="watch content" />
+              <img className={styles.watchScreenImage} src={watchImage} alt="watch content" />
             </div>
             <div className={styles.watchCrown} />
             <div className={styles.watchSideButton} />
