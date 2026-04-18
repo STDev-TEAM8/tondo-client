@@ -245,42 +245,44 @@ export default function LandingPage() {
         <div className={styles.section2Right}>
           <div className={styles.loginBox}>
             <p className={styles.formTitle}>체험 등록</p>
-            <div className={styles.formGroup}>
-              <input
-                className={styles.input}
-                type="text"
-                placeholder="이름"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={20}
-              />
-              <input
-                className={styles.input}
-                type="password"
-                inputMode="numeric"
-                placeholder="비밀번호 4자리"
-                value={pin}
-                onChange={handlePinChange}
-                maxLength={4}
-              />
-            </div>
+            <form onSubmit={(e) => { e.preventDefault(); handleStart(); }}>
+              <div className={styles.formGroup}>
+                <input
+                  className={styles.input}
+                  type="text"
+                  placeholder="이름"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={20}
+                />
+                <input
+                  className={styles.input}
+                  type="password"
+                  inputMode="numeric"
+                  placeholder="비밀번호 4자리"
+                  value={pin}
+                  onChange={handlePinChange}
+                  maxLength={4}
+                />
+              </div>
 
-            <div
-              className={styles.btnWrap}
-              style={{
-                opacity: canStart ? 1 : 0,
-                transform: canStart ? 'translateY(0)' : 'translateY(14px)',
-                pointerEvents: canStart ? 'auto' : 'none',
-              }}
-            >
-              <button
-                className={styles.startButton}
-                onClick={handleStart}
-                disabled={loading || !canStart}
+              <div
+                className={styles.btnWrap}
+                style={{
+                  opacity: canStart ? 1 : 0,
+                  transform: canStart ? 'translateY(0)' : 'translateY(14px)',
+                  pointerEvents: canStart ? 'auto' : 'none',
+                }}
               >
-                {loading ? '확인 중...' : '체험 시작하기'}
-              </button>
-            </div>
+                <button
+                  type="submit"
+                  className={styles.startButton}
+                  disabled={loading || !canStart}
+                >
+                  {loading ? '확인 중...' : '체험 시작하기'}
+                </button>
+              </div>
+            </form>
 
             {error && <p className={styles.error}>{error}</p>}
           </div>
