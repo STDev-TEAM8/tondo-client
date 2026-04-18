@@ -92,6 +92,16 @@ export function CosmicBg() {
         if (o.y < -100)      o.y = h + 100;
         if (o.y > h + 100)   o.y = -100;
 
+        if (o.hasRing) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.ellipse(o.x, o.y, o.radius * 2.2, o.radius * 0.5, o.ringAngle, 0, Math.PI * 2);
+          ctx.strokeStyle = o.glow;
+          ctx.lineWidth   = 10;
+          ctx.stroke();
+          ctx.restore();
+        }
+
         ctx.save();
         ctx.shadowBlur  = 20;
         ctx.shadowColor = o.glow;
@@ -108,15 +118,6 @@ export function CosmicBg() {
         ctx.arc(o.x, o.y, o.radius, 0, Math.PI * 2);
         ctx.fillStyle = grd;
         ctx.fill();
-
-        if (o.hasRing) {
-          ctx.beginPath();
-          ctx.ellipse(o.x, o.y, o.radius * 2.2, o.radius * 0.5, o.ringAngle, 0, Math.PI * 2);
-          ctx.strokeStyle = o.glow;
-          ctx.lineWidth   = 2;
-          ctx.stroke();
-        }
-
         ctx.restore();
       }
 

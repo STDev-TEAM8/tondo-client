@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CosmicBg } from '../components/CosmicBg';
-import { CosmicBgLogin } from '../components/CosmicBgLogin';
+import { VoiceWaveBg } from '../components/VoiceWaveBg';
+import { useMicLevel } from '../hooks/useMicLevel';
 import { useNavigate } from 'react-router-dom';
 import { signup } from '../api/artworkApi';
+import phoneImage from '../assets/img.png';
+import ipadImage from '../assets/ex2.png';
 import styles from './LandingPage.module.css';
 
 const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
@@ -24,6 +26,10 @@ export default function LandingPage() {
   // 캐러셀
   const [slideIdx, setSlideIdx] = useState(0);
   const carouselDragRef = useRef({ x: 0, y: 0 });
+
+  // 마이크 — 두 섹션의 파동을 사용자의 목소리로 살리는 인터랙티브
+  const [micEnabled, setMicEnabled] = useState(false);
+  const micRef = useMicLevel(micEnabled);
 
   // 이미지 2장 이상일 때 자동 슬라이드
   useEffect(() => {
@@ -108,17 +114,17 @@ export default function LandingPage() {
   };
 
   // ── 애니메이션 값 ──
-  const s1p          = clamp(progress / 0.65, 0, 1);
-  const s1Opacity    = 1 - s1p;
-  const s1TranslateY = -s1p * 80;
+  // 두 섹션이 이어진 단일 트랙을 progress에 맞춰 위로 당긴다.
+  // pageTrack 높이 = 200% → translateY(-50%) 이면 section2가 뷰포트에 꽉 참.
+  const trackTranslateY = -progress * 50;
 
-  const s2Opacity    = s1p;                                        // s1과 동일 구간 → 합 = 1
-  const s2p          = clamp((progress - 0.35) / 0.65, 0, 1);    // translateY는 별도
-  const s2TranslateY = (1 - s2p) * 80;
-
-  // 폼이 활성화되면 section2를 scroller 위로 올려서 입력 가능하게 함
+  // 폼이 활성화되면 pageTrack을 scroller 위로 올려서 입력 가능하게 함
   // 동시에 section2에서 휠/터치 이벤트를 포워딩해 위로 되돌아가기 지원
   const formActive = progress >= 0.95;
+  // 슬라이드 + 페이드를 하나의 값으로 묶어 완전히 동시에 진행
+  const phoneReveal = clamp((progress - 0.1) / 0.55, 0, 1);
+  // 맥북 뒤 레이어의 워치/아이폰 밀어내기 — 스크롤이 진행되면 좌우로 빠져나간다
+  const pushOut = progress >= 0.5;
 
   return (
     <div className={styles.outer}>
@@ -133,79 +139,96 @@ export default function LandingPage() {
         <div className={styles.snapPoint} />
       </div>
 
+      {/* ── 두 섹션이 이어진 세로 트랙 ── */}
+      <div
+        className={styles.pageTrack}
+        style={{
+          transform: `translateY(${trackTranslateY}%)`,
+          zIndex: formActive ? 11 : 1,
+        }}
+      >
+
+      {/* 두 섹션을 관통하는 단일 파동 캔버스 — 경계를 가로지르는 bridge wave */}
+      <VoiceWaveBg micRef={micRef} />
+
       {/* ── Section 1: 타이틀 + 설명 ── */}
       <div
         className={styles.section1}
         style={{
-          opacity: s1Opacity,
-          transform: `translateY(${s1TranslateY}px)`,
           pointerEvents: progress >= 0.5 ? 'none' : 'auto',
         }}
       >
-        <CosmicBg />
-        <p className={styles.eyebrow}>당신의 목소리가 예술이 됩니다</p>
+        <p className={styles.eyebrow}>소리를 그리다,</p>
         <h1 className={styles.title}>TonDo</h1>
         <p className={styles.description}>
-          목소리를 내면 수학적 파동이 그려지고,<br />
-          AI가 그 뼈대 위에 색채를 입혀<br />
-          세상에 하나뿐인 미디어 아트를 만들어드립니다.
+          목소리를 들려주세요. 당신의 파동이 세상에 하나뿐인 작품이 됩니다.
         </p>
+        <button
+          type="button"
+          className={`${styles.micToggle} ${micEnabled ? styles.micToggleActive : ''}`}
+          onClick={() => setMicEnabled((v) => !v)}
+        >
+          <span className={styles.micDot} />
+          {micEnabled ? '소리를 내보세요' : '마이크로 파동 만들기'}
+        </button>
         <p className={styles.scrollHint}>아래로 스크롤하여 시작하기</p>
       </div>
 
-      {/* ── Section 2: 좌우 분할 ── */}
+      {/* ── Section 2: 비주얼 + 폼 영역 ── */}
       <div
         className={styles.section2}
-        style={{
-          opacity: s2Opacity,
-          transform: `translateY(${s2TranslateY}px)`,
-          zIndex: formActive ? 11 : 1,
-        }}
         onWheel={handleSection2Wheel}
         onTouchStart={handleSection2TouchStart}
         onTouchMove={handleSection2TouchMove}
       >
-        <CosmicBgLogin />
-
-        {/* 왼쪽: 핸드폰 모형 + 카드 뉴스 스와이프 캐러셀 */}
         <div className={styles.section2Left}>
+          {/* ── 기존 iPhone 16 메인 목업 (주석 처리) ──
           <div className={styles.phoneMock}>
             <div className={styles.phoneScreen}>
-              <div
-                className={styles.carousel}
-                onTouchStart={onCarouselTouchStart}
-                onTouchMove={onCarouselTouchMove}
-                onTouchEnd={onCarouselTouchEnd}
-              >
-                <div
-                  className={styles.carouselTrack}
-                  style={{ transform: `translateX(-${slideIdx * 100}%)` }}
-                >
-                  {SLIDES.map((src, i) => (
-                    <img key={i} src={src} alt="" className={styles.carouselImg} draggable={false} />
-                  ))}
-                </div>
-                {SLIDES.length > 1 && (
-                  <div className={styles.carouselDots}>
-                    {SLIDES.map((_, i) => (
-                      <button
-                        key={i}
-                        className={`${styles.carouselDot} ${i === slideIdx ? styles.carouselDotActive : ''}`}
-                        onClick={() => setSlideIdx(i)}
-                      />
-                    ))}
-                  </div>
-                )}
+              <div className={styles.screenGlass}>
+                <img className={styles.phoneScreenImage} src={phoneImage} alt="phone content" />
+                <div className={styles.phoneNotch} />
+              </div>
+            </div>
+          </div>
+          */}
+
+          {/* ── 뒤 레이어: Apple Watch SE2 (왼쪽으로 밀어내기) ── */}
+          <div
+            className={`${styles.watchMock} ${pushOut ? styles.watchMockPushed : ''}`}
+          >
+            <div className={styles.watchScreen}>
+              <img className={styles.watchScreenImage} src={phoneImage} alt="watch content" />
+            </div>
+            <div className={styles.watchCrown} />
+            <div className={styles.watchSideButton} />
+          </div>
+
+          {/* ── 뒤 레이어: iPhone 16 (오른쪽으로 밀어내기) ── */}
+          <div
+            className={`${styles.iphoneSideMock} ${pushOut ? styles.iphoneSideMockPushed : ''}`}
+          >
+            <div className={styles.iphoneSideScreen}>
+              <div className={styles.screenGlass}>
+                <img className={styles.iphoneSideScreenImage} src={phoneImage} alt="iphone content" />
+                <div className={styles.iphoneSideNotch} />
+              </div>
+            </div>
+          </div>
+
+          {/* ── 앞 레이어: iPad Pro 목업 ── */}
+          <div className={styles.ipadMock}>
+            <div className={styles.ipadScreenWrap}>
+              <div className={styles.ipadNotch} />
+              <div className={styles.ipadScreen}>
+                <img className={styles.ipadScreenImage} src={ipadImage} alt="ipad content" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* 오른쪽: 폼 */}
         <div className={styles.section2Right}>
           <div className={styles.loginBox}>
-            <p className={styles.formTitle}>체험 등록</p>
-
             <div className={styles.formGroup}>
               <input
                 className={styles.input}
@@ -247,6 +270,9 @@ export default function LandingPage() {
           </div>
         </div>
       </div>
+
+      </div>
+      {/* pageTrack 끝 */}
 
     </div>
   );

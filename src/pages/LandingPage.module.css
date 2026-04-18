@@ -29,20 +29,33 @@
   flex-shrink: 0;
 }
 
-/* ── 공통 섹션 ── */
+/* ── 두 섹션을 담는 세로 트랙 (200% 높이) ── */
+.pageTrack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 200%;
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── 공통 섹션 — 트랙 내부 50%씩 차지 (= 뷰포트 100vh) ── */
 .section1,
 .section2 {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  width: 100%;
+  height: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 40px 28px;
   text-align: center;
-  z-index: 1;
-  will-change: transform, opacity;
-  transition: opacity 1s ease, transform 1.1s ease;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 /* ── Section 1: 타이틀 ── */
@@ -50,41 +63,93 @@
 .eyebrow,
 .title,
 .description,
-.scrollHint {
+.scrollHint,
+.micToggle {
   position: relative;
   z-index: 1;
 }
 
+/* ── 마이크 토글 — 사용자의 목소리로 파동을 깨우는 인터랙티브 입구 ── */
+.micToggle {
+  margin-bottom: 22px;
+  padding: 11px 22px;
+  font-size: 14px;
+  font-family: inherit;
+  letter-spacing: 0.05em;
+  color: #cfd9ec;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.25s, border-color 0.25s, color 0.25s, box-shadow 0.25s;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.micToggle:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.micToggleActive {
+  background: rgba(222, 185, 255, 0.16);
+  border-color: rgba(222, 185, 255, 0.45);
+  color: #ffffff;
+  box-shadow: 0 0 28px rgba(222, 185, 255, 0.28);
+}
+
+.micDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6b6b78;
+  transition: background 0.25s, box-shadow 0.25s;
+}
+
+.micToggleActive .micDot {
+  background: #ff5e80;
+  box-shadow: 0 0 12px rgba(255, 94, 128, 0.85);
+  animation: micPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes micPulse {
+  0%, 100% { opacity: 0.75; transform: scale(1);   }
+  50%       { opacity: 1;    transform: scale(1.35); }
+}
+
 .eyebrow {
-  font-size: 20px;
+  font-size: 40px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #ffffff;
-  margin-bottom: 16px;
+  color: #cfd9ec;
+  margin-bottom: 3px;
 }
 
 .title {
-  font-size: clamp(192px, 18vw, 96px);
-  font-weight: 700;
+  font-size: clamp(96px, 18vw, 210px);
+  font-weight: 750;
   letter-spacing: -3px;
   line-height: 1;
-  background: linear-gradient(135deg, #ffd5ed, #deb9ff, #cae9ff);
+  background: linear-gradient(135deg, #5f83aa, #8fb4ff, #cddef4);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 24px;
+  text-shadow: 0 8px 20px rgba(16, 16, 16, 0.25);
+  margin-bottom: 30px;
 }
 
 .description {
-  font-size: 20px;
-  line-height: 1.8;
-  color: #a7a7a7;
+  font-size: 22px;
+  line-height: 28px;
+  color: #cfd9ec;
   max-width: 400px;
   margin-bottom: 48px;
+  text-shadow: 0 8px 20px rgba(16, 16, 16, 0.25);
 }
 
 .scrollHint {
-  font-size: 16px;
+  font-size: 20px;
   color: #464646;
   letter-spacing: 0.05em;
   animation: hintBob 2s ease-in-out infinite;
@@ -107,62 +172,260 @@
 .section2Left {
   position: relative;
   flex: 1;
-  overflow: hidden;
+  overflow: visible;
   z-index: 1;
 }
 
-/* 왼쪽 이미지 — 중앙 정렬 */
+/* 왼쪽 이미지 — 중앙 정렬 (MacBook 고정, entrance 애니메이션 제거) */
 .section2Left {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
 }
 
-/* ── 핸드폰 모형 ── */
+/* ── 기존 iPhone 16 목업 (주석 처리) ──
 .phoneMock {
   position: relative;
-  width: 300px;
-  max-width: 85%;
-  aspect-ratio: 9 / 19;
-  background: #0a0a0a;
-  border: 3px solid #333;
-  border-radius: 36px;
+  left: -20%;
+  width: min(499px, 80%);
+  aspect-ratio: 9 / 19.5;
+  transform: rotate(90deg);
+  transform-origin: center;
+  background: #050506;
+  border: 1.5px solid #141416;
+  border-radius: 70px;
   box-shadow:
-    0 0 0 1px #111,
-    0 20px 60px rgba(0, 0, 0, 0.6),
-    inset 0 0 0 1px #222;
+    0 0 0 1.5px #2d2d32,
+    0 0 0 3px #0a0a0b,
+    0 28px 80px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  opacity: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
 }
 
-/* 상단 노치 */
-.phoneMock::before {
-  content: '';
+.phoneScreen {
   position: absolute;
-  top: 10px;
+  inset: 7px;
+  border-radius: 55px;
+  overflow: hidden;
+  background: #050608;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phoneScreenImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.phoneNotch {
+  position: absolute;
+  top: 12px;
   left: 50%;
   transform: translateX(-50%);
-  width: 60px;
-  height: 6px;
-  background: #222;
-  border-radius: 3px;
+  width: 36%;
+  max-width: 148px;
+  height: 34px;
+  background: #000;
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 0.5px #1a1a1c,
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.04);
+  z-index: 2;
+}
+*/
+
+/* 공유: 화면 글래스 효과 */
+.screenGlass {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));
+  overflow: hidden;
+}
+
+/* ── iPad Pro 목업 (앞 레이어) ── */
+.ipadMock {
+  position: relative;
+  z-index: 3;
+  width: min(420px, 92%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.45));
+  flex-shrink: 0;
+}
+
+.ipadScreenWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #050608;
+  border: 1.5px solid #1a1a1f;
+  border-radius: 36px;
+  padding: 14px;
+  box-shadow:
+    0 0 0 1.5px #2d2d32,
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.ipadNotch {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20%;
+  max-width: 130px;
+  height: 16px;
+  background: rgba(0, 0, 0, 0.9);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   z-index: 2;
 }
 
-/* 화면 영역: 폰 내부를 flex column으로 — 이미지 상단, 여백 하단 */
-.phoneScreen {
+.ipadScreenImage {
   position: absolute;
   inset: 0;
-  border-radius: 34px;
-  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Apple Watch SE2 목업 (뒤 레이어, 왼쪽으로 밀어내기) ── */
+.watchMock {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: min(150px, 24%);
+  aspect-ratio: 38 / 44;
+  background: #050506;
+  border: 1.5px solid #1a1a1d;
+  border-radius: 28px;
+  box-shadow:
+    0 0 0 1.5px #2d2d32,
+    0 18px 40px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  background: #111;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  transition: transform 1s ease;
+  will-change: transform;
+}
+
+.watchMockPushed {
+  transform: translate(calc(-50% - 180px), -50%);
+}
+
+.watchScreen {
+  position: absolute;
+  inset: 8px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: #050608;
+}
+
+.watchScreenImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Digital Crown */
+.watchCrown {
+  position: absolute;
+  right: -5px;
+  top: 30%;
+  width: 6px;
+  height: 22px;
+  background: linear-gradient(180deg, #2a2a2d, #15151a);
+  border-radius: 2px;
+}
+
+.watchSideButton {
+  position: absolute;
+  right: -3px;
+  top: 58%;
+  width: 4px;
+  height: 28px;
+  background: linear-gradient(180deg, #1f1f23, #0e0e12);
+  border-radius: 2px;
+}
+
+/* ── iPhone 16 목업 (뒤 레이어, 오른쪽으로 밀어내기) ── */
+.iphoneSideMock {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: min(180px, 30%);
+  aspect-ratio: 9 / 19.5;
+  background: #050506;
+  border: 1.5px solid #141416;
+  border-radius: 32px;
+  box-shadow:
+    0 0 0 1.5px #2d2d32,
+    0 22px 50px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  transition: transform 1s ease;
+  will-change: transform;
+  overflow: hidden;
+}
+
+.iphoneSideMockPushed {
+  transform: translate(calc(-50% + 220px), -50%);
+}
+
+.iphoneSideScreen {
+  position: absolute;
+  inset: 5px;
+  border-radius: 26px;
+  overflow: hidden;
+  background: #050608;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.iphoneSideScreenImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.iphoneSideNotch {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 38%;
+  max-width: 70px;
+  height: 18px;
+  background: #000;
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 0.5px #1a1a1c,
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.04);
+  z-index: 2;
 }
 
 /* ── 캐러셀: 좌우·위 여백을 두고 정사각형 ── */
@@ -239,26 +502,22 @@
   z-index: 1;
 }
 
-/* 로그인 반투명 박스 */
+/* 로그인 박스 래퍼 제거된 시각 스타일 */
 .loginBox {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 380px;
-  padding: 36px 32px;
-  background: rgba(34, 44, 57, 0.62);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  max-width: 420px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
   position: relative;
   z-index: 1;
 }
 
 /* 폼 요소 캔버스 위에 렌더 */
-.formTitle,
 .formGroup,
 .btnWrap,
 .error {
@@ -266,36 +525,28 @@
   z-index: 1;
 }
 
-.formTitle {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #adadad;
-  margin-bottom: 28px;
-}
-
 .formGroup {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 22px;
   width: 100%;
-  max-width: 320px;
+  max-width: 420px;
   margin-bottom: 28px;
 }
 
 .input {
   width: 100%;
-  padding: 14px 18px;
+  padding: 24px 24px;
   background: #111;
   border: 1px solid #2a2a2a;
-  border-radius: 12px;
+  border-radius: 28px;
   color: #e8e8e8;
-  font-size: 16px;       /* 16px 미만이면 iOS에서 자동 확대됨 */
+  font-size: 18px;       /* 16px 미만이면 iOS에서 자동 확대됨 */
   font-family: inherit;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .input::placeholder {
@@ -399,7 +650,15 @@
     align-items: center;
   }
 
-  .phoneMock {
-    width: 220px;
+  .macbookMock {
+    width: 320px;
+  }
+
+  .watchMockPushed {
+    transform: translate(calc(-50% - 130px), -50%);
+  }
+
+  .iphoneSideMockPushed {
+    transform: translate(calc(-50% + 150px), -50%);
   }
 }
