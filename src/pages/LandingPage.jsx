@@ -142,11 +142,12 @@ export default function LandingPage() {
   return (
     <div className={styles.outer}>
 
-      {/* 투명 스크롤 드라이버 (항상 pointer-events: auto) */}
+      {/* 투명 스크롤 드라이버 — 폼 활성화 시 pointer-events 해제 (Safari 입력 막힘 방지) */}
       <div
         ref={scrollRef}
         className={styles.scroller}
         onScroll={handleScroll}
+        style={{ pointerEvents: formActive ? 'none' : 'auto' }}
       >
         <div className={styles.snapPoint} />
         <div className={styles.snapPoint} />

@@ -16,7 +16,7 @@
   overflow-y: scroll;
   z-index: 10;
   scrollbar-width: none;
-  scroll-snap-type: y mandatory; /* 스냅 활성화 */
+  scroll-snap-type: y proximity; /* Safari mandatory는 강제 점프 발생 → proximity로 완화 */
 }
 .scroller::-webkit-scrollbar {
   display: none;
