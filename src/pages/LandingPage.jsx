@@ -75,6 +75,26 @@ export default function LandingPage() {
     setProgress(max > 0 ? el.scrollTop / max : 0);
   }, []);
 
+  // ── Section1 아래로 스크롤 → 즉시 section2로 전환 (스냅 대체) ──
+  const handleSection1Wheel = useCallback((e) => {
+    if (e.deltaY <= 0) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight - el.clientHeight;
+  }, []);
+
+  const handleSection1TouchStart = useCallback((e) => {
+    touchYRef.current = e.touches[0].clientY;
+  }, []);
+
+  const handleSection1TouchMove = useCallback((e) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const delta = touchYRef.current - e.touches[0].clientY;
+    touchYRef.current = e.touches[0].clientY;
+    if (delta > 10) el.scrollTop = el.scrollHeight - el.clientHeight;
+  }, []);
+
   // ── Section2 위에서 휠/터치 → 스크롤러에 포워딩 (위로 되돌아가기 지원) ──
   const handleSection2Wheel = useCallback((e) => {
     const el = scrollRef.current;
@@ -171,6 +191,9 @@ export default function LandingPage() {
         style={{
           pointerEvents: progress >= 0.5 ? 'none' : 'auto',
         }}
+        onWheel={handleSection1Wheel}
+        onTouchStart={handleSection1TouchStart}
+        onTouchMove={handleSection1TouchMove}
       >
         <p className={styles.eyebrow}>소리를 그리다,</p>
         <h1 className={styles.title}>TonDo</h1>
